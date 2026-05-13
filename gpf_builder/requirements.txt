@@ -1,0 +1,3 @@
+google-cloud-vision
+beautifulsoup4
+lxml

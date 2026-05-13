@@ -1,0 +1,20 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "gpf_builder"
+authors = [
+    {name = "Hafiz Ums", email = "al.hafiz@ums.com"},
+]
+description = "GPF Print Format Builder for Frappe"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    "google-cloud-vision",
+    "beautifulsoup4",
+    "lxml"
+]
+
+[tool.flit.module]
+name = "gpf_builder"

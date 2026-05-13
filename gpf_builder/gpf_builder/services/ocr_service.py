@@ -62,28 +62,22 @@ class OCRService:
 	def call_google_vision(content):
 		"""
 		Wrapper for Google Cloud Vision API.
-		Expects configuration to be set in Site Config or System Settings.
+		Supports Service Account JSON (via SDK) or API Key (via REST).
 		"""
-		# In a real environment, we'd use the Google Cloud SDK:
-		# from google.cloud import vision
-		# client = vision.ImageAnnotatorClient()
-		# ...
-		
-		# For this implementation, we provide a hook that can be mocked in tests.
-		# In production, this would use configured credentials.
-		
 		if frappe.conf.get("mock_ocr"):
 			return frappe.conf.get("mock_ocr_response") or "Mock OCR result text."
 
-		# Check if credentials exist (placeholder for real check)
-		# if not frappe.db.get_single_value("GPF Settings", "google_vision_enabled"):
-		#    frappe.throw(frappe._("Google Vision OCR is not enabled."), ERROR_OCR_NOT_CONFIGURED)
+		api_key = frappe.conf.get("google_api_key")
+		creds_json = frappe.conf.get("google_vision_credentials")
+
+		if not api_key and not creds_json:
+			frappe.throw(frappe._("Google Vision OCR is not configured. Add 'google_api_key' or 'google_vision_credentials' to site config."), ERROR_OCR_NOT_CONFIGURED)
 
 		try:
-			# Mocking the actual call structure for the agentic environment
-			# In actual Frappe 14, this would be the place for the RPC call
-			raw_result = OCRService._execute_vision_call(content)
-			return raw_result
+			if api_key:
+				return OCRService._execute_vision_rest_call(content, api_key)
+			else:
+				return OCRService._execute_vision_sdk_call(content, creds_json)
 		except Exception as e:
 			frappe.log_error(frappe.get_traceback(), "OCR Provider Failure")
 			frappe.throw(
@@ -93,9 +87,53 @@ class OCRService:
 			)
 
 	@staticmethod
-	def _execute_vision_call(content):
+	def _execute_vision_rest_call(content, api_key):
 		"""
-		Private method to contain the actual SDK call, isolated for mocking.
+		Uses a direct REST call to Google Vision API using an API Key.
 		"""
-		# This is where the actual google-cloud-vision SDK interaction happens
-		return ""
+		import requests
+		import base64
+
+		# Ensure content is base64 encoded if not already
+		if isinstance(content, bytes):
+			b64_content = base64.b64encode(content).decode("utf-8")
+		else:
+			b64_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
+
+		url = "https://vision.googleapis.com/v1/images:annotate?key={0}".format(api_key)
+		payload = {
+			"requests": [{
+				"image": {"content": b64_content},
+				"features": [{"type": "DOCUMENT_TEXT_DETECTION"}]
+			}]
+		}
+		
+		response = requests.post(url, json=payload)
+		if response.status_code != 200:
+			raise Exception("Google Vision REST Error: {0}".format(response.text))
+			
+		res_json = response.json()
+		try:
+			return res_json["responses"][0]["fullTextAnnotation"]["text"]
+		except (KeyError, IndexError):
+			return ""
+
+	@staticmethod
+	def _execute_vision_sdk_call(content, creds_json):
+		"""
+		Uses the Google Cloud Vision SDK with Service Account credentials.
+		"""
+		from google.cloud import vision
+		from google.oauth2 import service_account
+		
+		info = json.loads(creds_json)
+		credentials = service_account.Credentials.from_service_account_info(info)
+		client = vision.ImageAnnotatorClient(credentials=credentials)
+		
+		image = vision.Image(content=content)
+		response = client.document_text_detection(image=image)
+		
+		if response.error.message:
+			raise Exception(response.error.message)
+			
+		return response.full_text_annotation.text

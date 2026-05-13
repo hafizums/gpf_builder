@@ -13,7 +13,9 @@
    ```
 
 ### 1.2 Configuration
-- **Google Vision**: Add `google_vision_credentials` (JSON string) to `common_site_config.json`.
+- **Google Vision**: You can use either an **API Key** or a **Service Account JSON**:
+  - **API Key (Simple)**: Add `"google_api_key": "YOUR_KEY"` to `common_site_config.json`.
+  - **Service Account (Advanced)**: Add `google_vision_credentials` (raw JSON content) to `common_site_config.json`. Set via console: `frappe.set_config("google_vision_credentials", open("key.json").read())`.
 - **Rate Limits**: Configurable in `GPF Settings` (DocType).
 - **PDF Size**: Defaulted to 2MB, configurable in `PDFService`.
 

@@ -8,8 +8,8 @@ app_license = "MIT"
 
 # Assets
 # -------
-app_include_js = "/assets/gpf_builder/js/gpf_builder.js"
-app_include_css = "/assets/gpf_builder/css/gpf_builder.css"
+# app_include_js = "/assets/gpf_builder/js/gpf_builder.js"
+# app_include_css = "/assets/gpf_builder/css/gpf_builder.css"
 
 # Desk Page
 # ---------

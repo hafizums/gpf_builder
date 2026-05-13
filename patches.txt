@@ -1,1 +1,1 @@
-gpf_builder.gpf_builder.patches.create_active_setup
+gpf_builder.patches.create_active_setup

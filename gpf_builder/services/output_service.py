@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import frappe
 import json
-from gpf_builder.gpf_builder.services.layout_service import LayoutService
-from gpf_builder.gpf_builder.services.setup_service import SetupService
-from gpf_builder.gpf_builder.domain.constants import (
+from frappe.utils import escape_html
+from gpf_builder.services.layout_service import LayoutService
+from gpf_builder.services.setup_service import SetupService
+from gpf_builder.domain.constants import (
 	BLOCK_TYPE_STATIC_TEXT,
 	BLOCK_TYPE_DYNAMIC_FIELD,
 	BLOCK_TYPE_OCR_TEXT,
@@ -58,23 +59,25 @@ class OutputService:
 		Renders content using real production data from the document.
 		"""
 		if block.block_type == BLOCK_TYPE_STATIC_TEXT:
-			return block.static_text or ""
+			return escape_html(block.static_text or "")
 			
 		elif block.block_type == BLOCK_TYPE_DYNAMIC_FIELD:
 			# Get formatted value from Frappe if possible
 			val = doc.get(block.fieldname)
-			return "<span>{0}</span>".format(frappe.utils.cstr(val) if val is not None else "")
+			return "<span>{0}</span>".format(escape_html(frappe.utils.cstr(val) if val is not None else ""))
 			
 		elif block.block_type == BLOCK_TYPE_OCR_TEXT:
 			# Only show if result is confirmed
 			ocr_data = frappe.db.get_value("GPF OCR Result", block.ocr_result, ["normalized_text", "confirmed"], as_dict=True)
 			if ocr_data and ocr_data.confirmed:
-				return "<span>{0}</span>".format(ocr_data.normalized_text or "")
+				return "<span>{0}</span>".format(escape_html(ocr_data.normalized_text or ""))
 			return ""
 			
 		elif block.block_type == BLOCK_TYPE_IMAGE or block.block_type == BLOCK_TYPE_BRANDING:
 			if block.file_reference:
 				file_url = frappe.db.get_value("File", block.file_reference, "file_url")
-				return '<img src="{0}" style="width:100%; height:100%; object-fit:contain;" />'.format(file_url)
+				if not file_url:
+					file_url = block.file_reference
+				return '<img src="{0}" style="width:100%; height:100%; object-fit:contain;" />'.format(escape_html(file_url))
 			
 		return ""

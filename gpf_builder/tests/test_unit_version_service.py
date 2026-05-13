@@ -2,7 +2,7 @@
 import frappe
 import unittest
 import json
-from gpf_builder.gpf_builder.services.version_service import VersionService
+from gpf_builder.services.version_service import VersionService
 
 class TestVersionService(unittest.TestCase):
 	def setUp(self):

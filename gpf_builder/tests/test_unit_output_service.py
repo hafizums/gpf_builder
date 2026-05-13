@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import frappe
 import unittest
-from gpf_builder.gpf_builder.services.output_service import OutputService
-from gpf_builder.gpf_builder.services.layout_service import LayoutService
-from gpf_builder.gpf_builder.domain.constants import SETUP_STATUS_FINALIZED, SETUP_STATUS_EDITING
+from gpf_builder.services.output_service import OutputService
+from gpf_builder.services.layout_service import LayoutService
+from gpf_builder.domain.constants import SETUP_STATUS_FINALIZED, SETUP_STATUS_EDITING
 
 class TestOutputService(unittest.TestCase):
 	def setUp(self):

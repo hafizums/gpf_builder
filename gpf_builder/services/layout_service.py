@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 import frappe
 import json
-from gpf_builder.gpf_builder.domain.constants import ERROR_ACCESS_DENIED
+from gpf_builder.domain.constants import (
+	BLOCK_TYPE_BRANDING,
+	BLOCK_TYPE_DYNAMIC_FIELD,
+	BLOCK_TYPE_IMAGE,
+	BLOCK_TYPE_OCR_TEXT,
+	BLOCK_TYPE_STATIC_TEXT
+)
+from gpf_builder.services.branding_service import BrandingService
+from gpf_builder.services.field_mapping_service import FieldMappingService
 
 class LayoutService:
 	# Allowlisted CSS properties for rendering blocks
@@ -44,10 +52,26 @@ class LayoutService:
 		"""
 		Validates block coordinates (0-100) and style JSON.
 		"""
+		if "type" in block_data and not block_data.get("block_type"):
+			block_data["block_type"] = block_data.get("type")
+
+		block_type = block_data.get("block_type")
+		if block_type not in [
+			BLOCK_TYPE_STATIC_TEXT,
+			BLOCK_TYPE_DYNAMIC_FIELD,
+			BLOCK_TYPE_OCR_TEXT,
+			BLOCK_TYPE_IMAGE,
+			BLOCK_TYPE_BRANDING
+		]:
+			frappe.throw(frappe._("Invalid block type: {0}").format(block_type), frappe.ValidationError)
+
 		for coord in ["x", "y", "width", "height"]:
 			val = float(block_data.get(coord, 0))
 			if val < 0 or val > 100:
 				frappe.throw(frappe._("Invalid coordinates: {0} must be between 0 and 100.").format(coord), frappe.ValidationError)
+
+		if float(block_data.get("width", 0)) <= 0 or float(block_data.get("height", 0)) <= 0:
+			frappe.throw(frappe._("Block width and height must be greater than zero."), frappe.ValidationError)
 		
 		# Ensure width + x and height + y don't exceed 100
 		if float(block_data.get("x", 0)) + float(block_data.get("width", 0)) > 100:
@@ -56,10 +80,20 @@ class LayoutService:
 			frappe.throw(frappe._("Block exceeds vertical boundary."), frappe.ValidationError)
 
 		# 3. Block Type Specifics
-		if block_data.get("block_type") == "Static Text":
+		if block_type == BLOCK_TYPE_STATIC_TEXT:
 			text = block_data.get("static_text")
 			if not text or not text.strip():
 				frappe.throw(frappe._("Static Text block cannot be empty or whitespace only."), frappe.ValidationError)
+
+		if block_type == BLOCK_TYPE_DYNAMIC_FIELD and not FieldMappingService.validate_fieldname(block_data.get("fieldname")):
+			frappe.throw(frappe._("Dynamic Field block uses an invalid fieldname."), frappe.ValidationError)
+
+		if block_type == BLOCK_TYPE_OCR_TEXT and block_data.get("ocr_result"):
+			if not frappe.db.exists("GPF OCR Result", block_data.get("ocr_result")):
+				frappe.throw(frappe._("OCR Result not found: {0}").format(block_data.get("ocr_result")), frappe.DoesNotExistError)
+
+		if block_type in [BLOCK_TYPE_IMAGE, BLOCK_TYPE_BRANDING] and block_data.get("file_reference"):
+			BrandingService.validate_image(block_data.get("file_reference"))
 
 	@staticmethod
 	def create_block(setup_name, block_data):
@@ -71,7 +105,7 @@ class LayoutService:
 		block = frappe.get_doc({
 			"doctype": "GPF Layout Block",
 			"setup": setup_name,
-			"block_type": block_data.get("block_type"),
+			"block_type": block_data.get("block_type") or block_data.get("type"),
 			"x": block_data.get("x"),
 			"y": block_data.get("y"),
 			"width": block_data.get("width"),
@@ -148,8 +182,8 @@ class LayoutService:
 			
 			block = frappe.get_doc({
 				"doctype": "GPF Layout Block",
-				"setup": setup_name,
-				"block_type": block_data.get("block_type"),
+			"setup": setup_name,
+			"block_type": block_data.get("block_type") or block_data.get("type"),
 				"x": block_data.get("x"),
 				"y": block_data.get("y"),
 				"width": block_data.get("width"),

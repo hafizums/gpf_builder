@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import frappe
 import unittest
-from gpf_builder.gpf_builder.utils.error_service import ErrorService
+from gpf_builder.utils.error_service import ErrorService
 
 class TestErrorHandling(unittest.TestCase):
 	def test_sanitized_error_throwing(self):

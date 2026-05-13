@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import frappe
 import unittest
-from gpf_builder.gpf_builder.services.access_control_service import AccessControlService
+from gpf_builder.services.access_control_service import AccessControlService
 
 class TestAccessControl(unittest.TestCase):
 	def setUp(self):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import frappe
-from gpf_builder.gpf_builder.domain.constants import ERROR_ACCESS_DENIED
+from gpf_builder.domain.constants import ERROR_ACCESS_DENIED
 
 class AccessControlService:
 	@staticmethod

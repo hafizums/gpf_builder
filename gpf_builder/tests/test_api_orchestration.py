@@ -2,8 +2,8 @@
 import frappe
 import unittest
 import json
-from gpf_builder.gpf_builder.api.api import save_layout, finalize_setup, upload_pdf_reference
-from gpf_builder.gpf_builder.domain.constants import SETUP_STATUS_FINALIZED
+from gpf_builder.api.api import save_layout, finalize_setup, upload_pdf_reference
+from gpf_builder.domain.constants import SETUP_STATUS_FINALIZED
 
 class TestAPIOrchestration(unittest.TestCase):
 	def setUp(self):

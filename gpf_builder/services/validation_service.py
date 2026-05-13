@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import frappe
-from gpf_builder.gpf_builder.domain.constants import ERROR_ACCESS_DENIED
+from gpf_builder.domain.constants import ERROR_ACCESS_DENIED
+from gpf_builder.services.pdf_service import PDFService
 
 class ValidationService:
 	@staticmethod
@@ -29,13 +30,26 @@ class ValidationService:
 		if not file_name:
 			return
 
+		try:
+			file_doc = PDFService.get_file_doc(file_name)
+		except Exception:
+			frappe.throw(
+				frappe._("Access denied: The requested file is not associated with the active setup."),
+				frappe.PermissionError,
+				ERROR_ACCESS_DENIED
+			)
+
 		# Check if it is the primary PDF reference
 		pdf_file = frappe.db.get_value("GPF Print Format Setup", setup_name, "pdf_reference_file")
-		if file_name == pdf_file:
+		if file_name == pdf_file or file_doc.name == pdf_file or file_doc.file_url == pdf_file:
 			return
 
 		# Check if it is used in a layout block belonging to this setup
-		if frappe.db.exists("GPF Layout Block", {"setup": setup_name, "file_reference": file_name}):
+		if (
+			frappe.db.exists("GPF Layout Block", {"setup": setup_name, "file_reference": file_name})
+			or frappe.db.exists("GPF Layout Block", {"setup": setup_name, "file_reference": file_doc.name})
+			or frappe.db.exists("GPF Layout Block", {"setup": setup_name, "file_reference": file_doc.file_url})
+		):
 			return
 
 		frappe.throw(

@@ -2,7 +2,7 @@
 import frappe
 import unittest
 from unittest.mock import patch, MagicMock
-from gpf_builder.gpf_builder.services.ocr_service import OCRService
+from gpf_builder.services.ocr_service import OCRService
 
 class TestOCRService(unittest.TestCase):
 	def test_normalize_text(self):
@@ -17,8 +17,8 @@ class TestOCRService(unittest.TestCase):
 		raw_with_noise = "Hello\x00World"
 		self.assertEqual(OCRService.normalize_text(raw_with_noise), "HelloWorld")
 
-	@patch("gpf_builder.gpf_builder.services.ocr_service.OCRService.call_google_vision")
-	@patch("gpf_builder.gpf_builder.services.ocr_service.frappe.get_doc")
+	@patch("gpf_builder.services.ocr_service.OCRService.call_google_vision")
+	@patch("gpf_builder.services.ocr_service.frappe.get_doc")
 	def test_run_ocr_persistence(self, mock_get_doc, mock_call_vision):
 		"""
 		Proving that OCR results are correctly saved to the database.

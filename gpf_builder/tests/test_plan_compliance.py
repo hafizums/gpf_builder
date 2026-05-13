@@ -2,11 +2,11 @@
 import frappe
 import unittest
 import json
-from gpf_builder.gpf_builder.services.layout_service import LayoutService
-from gpf_builder.gpf_builder.services.finalization_service import FinalizationService
-from gpf_builder.gpf_builder.services.branding_service import BrandingService
-from gpf_builder.gpf_builder.services.ocr_service import OCRService
-from gpf_builder.gpf_builder.services.output_service import OutputService
+from gpf_builder.services.layout_service import LayoutService
+from gpf_builder.services.finalization_service import FinalizationService
+from gpf_builder.services.branding_service import BrandingService
+from gpf_builder.services.ocr_service import OCRService
+from gpf_builder.services.output_service import OutputService
 
 class TestPlanCompliance(unittest.TestCase):
 	def setUp(self):

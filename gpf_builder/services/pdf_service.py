@@ -1,11 +1,35 @@
 # -*- coding: utf-8 -*-
 import frappe
 import os
-from gpf_builder.gpf_builder.domain.constants import ERROR_INVALID_FILE_TYPE, ERROR_PDF_TOO_LARGE, ERROR_PDF_PAGE_COUNT_INVALID
+from gpf_builder.domain.constants import (
+	ERROR_ACCESS_DENIED,
+	ERROR_INVALID_FILE_TYPE,
+	ERROR_PDF_TOO_LARGE,
+	ERROR_PDF_PAGE_COUNT_INVALID
+)
 
 class PDFService:
 	# MVP Constraint: 2MB limit for PDF references
 	MAX_SIZE_BYTES = 2 * 1024 * 1024
+
+	@staticmethod
+	def get_file_doc(file_name):
+		"""
+		Resolve a Frappe File by document name or file_url.
+		Frappe Attach fields usually store file_url, while FileUploader returns
+		the File document name. The builder accepts both to keep the UI simple.
+		"""
+		if not file_name:
+			frappe.throw(frappe._("File reference is required."), frappe.DoesNotExistError)
+
+		if frappe.db.exists("File", file_name):
+			return frappe.get_doc("File", file_name)
+
+		file_doc_name = frappe.db.get_value("File", {"file_url": file_name}, "name")
+		if file_doc_name:
+			return frappe.get_doc("File", file_doc_name)
+
+		frappe.throw(frappe._("File record not found: {0}").format(file_name), frappe.DoesNotExistError)
 
 	@staticmethod
 	def validate_pdf(file_name):
@@ -13,11 +37,7 @@ class PDFService:
 		Validate that the provided file is a single-page PDF within size limits.
 		Ensures file is private and correctly stored.
 		"""
-		# 1. Check if File record exists
-		if not frappe.db.exists("File", file_name):
-			frappe.throw(frappe._("File record not found: {0}").format(file_name), frappe.DoesNotExistError)
-		
-		file_doc = frappe.get_doc("File", file_name)
+		file_doc = PDFService.get_file_doc(file_name)
 
 		# 2. Security Check: Must be private
 		if not file_doc.is_private:
@@ -79,5 +99,7 @@ class PDFService:
 		return {
 			"page_count": page_count,
 			"file_size": file_doc.file_size,
-			"file_name": file_doc.file_name
+			"file_name": file_doc.file_name,
+			"file_url": file_doc.file_url,
+			"name": file_doc.name
 		}

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import frappe
 import unittest
-from gpf_builder.gpf_builder.services.preview_service import PreviewService
-from gpf_builder.gpf_builder.services.layout_service import LayoutService
+from gpf_builder.services.preview_service import PreviewService
+from gpf_builder.services.layout_service import LayoutService
 
 class TestPreviewService(unittest.TestCase):
 	def setUp(self):

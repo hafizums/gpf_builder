@@ -2,10 +2,10 @@
 import frappe
 import unittest
 import time
-from gpf_builder.gpf_builder.services.rate_limit_service import RateLimitService
-from gpf_builder.gpf_builder.services.audit_log_service import AuditLogService
-from gpf_builder.gpf_builder.services.output_service import OutputService
-from gpf_builder.gpf_builder.domain.constants import RATE_LIMIT_SAVE_LAYOUT
+from gpf_builder.services.rate_limit_service import RateLimitService
+from gpf_builder.services.audit_log_service import AuditLogService
+from gpf_builder.services.output_service import OutputService
+from gpf_builder.domain.constants import RATE_LIMIT_SAVE_LAYOUT
 
 class TestHardeningAndRedaction(unittest.TestCase):
 	def setUp(self):

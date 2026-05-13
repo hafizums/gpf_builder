@@ -1,11 +1,22 @@
 # -*- coding: utf-8 -*-
 import frappe
 import re
-from gpf_builder.gpf_builder.domain.constants import ALLOWED_BRANDING_EXTENSIONS, ERROR_INVALID_FILE_TYPE
+from gpf_builder.domain.constants import ALLOWED_BRANDING_EXTENSIONS, ERROR_INVALID_FILE_TYPE
 
 class BrandingService:
 	# MVP Constraint: 1MB limit for branding assets
 	MAX_SIZE_BYTES = 1 * 1024 * 1024
+
+	@staticmethod
+	def get_file_doc(file_name):
+		if frappe.db.exists("File", file_name):
+			return frappe.get_doc("File", file_name)
+
+		file_doc_name = frappe.db.get_value("File", {"file_url": file_name}, "name")
+		if file_doc_name:
+			return frappe.get_doc("File", file_doc_name)
+
+		frappe.throw(frappe._("File record not found: {0}").format(file_name), frappe.DoesNotExistError)
 
 	@staticmethod
 	def validate_image(file_name):
@@ -13,10 +24,7 @@ class BrandingService:
 		Validates a branding image asset (Logo, Signature, etc).
 		Checks for allowed extensions, size limits, and sanitizes SVG content.
 		"""
-		if not frappe.db.exists("File", file_name):
-			frappe.throw(frappe._("File record not found: {0}").format(file_name), frappe.DoesNotExistError)
-			
-		file_doc = frappe.get_doc("File", file_name)
+		file_doc = BrandingService.get_file_doc(file_name)
 		
 		# 1. Extension Check
 		ext = "." + file_doc.file_name.split(".")[-1].lower()

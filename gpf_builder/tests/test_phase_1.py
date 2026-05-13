@@ -1,6 +1,6 @@
 import frappe
 import unittest
-from gpf_builder.gpf_builder.patches.create_active_setup import execute as run_patch
+from gpf_builder.patches.create_active_setup import execute as run_patch
 
 class TestPhase1(unittest.TestCase):
 	def setUp(self):

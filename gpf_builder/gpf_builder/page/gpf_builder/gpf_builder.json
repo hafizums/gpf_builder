@@ -1,7 +1,7 @@
 {
 	"standard": "Yes",
 	"module": "GPF Builder",
-	"name": "gpf_builder",
+	"name": "gpf-builder",
 	"page_name": "gpf-builder",
 	"title": "GPF Print Format Builder",
 	"roles": [

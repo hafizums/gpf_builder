@@ -2,16 +2,16 @@
 import frappe
 import unittest
 from unittest.mock import patch, MagicMock
-from gpf_builder.gpf_builder.services.pdf_service import PDFService
+from gpf_builder.services.pdf_service import PDFService
 
 class TestPDFService(unittest.TestCase):
 	def setUp(self):
 		self.pdf_service = PDFService()
 
-	@patch("gpf_builder.gpf_builder.services.pdf_service.frappe.get_doc")
-	@patch("gpf_builder.gpf_builder.services.pdf_service.frappe.db.exists")
-	@patch("gpf_builder.gpf_builder.services.pdf_service.PdfReader")
-	@patch("gpf_builder.gpf_builder.services.pdf_service.os.path.exists")
+	@patch("gpf_builder.services.pdf_service.frappe.get_doc")
+	@patch("gpf_builder.services.pdf_service.frappe.db.exists")
+	@patch("gpf_builder.services.pdf_service.PdfReader")
+	@patch("gpf_builder.services.pdf_service.os.path.exists")
 	def test_validate_pdf_success(self, mock_os_exists, mock_pdf_reader, mock_db_exists, mock_get_doc):
 		"""
 		Proving valid PDF (private, <2MB, 1 page) is accepted.
@@ -33,8 +33,8 @@ class TestPDFService(unittest.TestCase):
 		result = PDFService.validate_pdf("test_file_name")
 		self.assertEqual(result["page_count"], 1)
 
-	@patch("gpf_builder.gpf_builder.services.pdf_service.frappe.get_doc")
-	@patch("gpf_builder.gpf_builder.services.pdf_service.frappe.db.exists")
+	@patch("gpf_builder.services.pdf_service.frappe.get_doc")
+	@patch("gpf_builder.services.pdf_service.frappe.db.exists")
 	def test_validate_pdf_public_rejected(self, mock_db_exists, mock_get_doc):
 		"""
 		Proving public PDF is rejected.
@@ -47,8 +47,8 @@ class TestPDFService(unittest.TestCase):
 		with self.assertRaises(frappe.PermissionError):
 			PDFService.validate_pdf("test_file_name")
 
-	@patch("gpf_builder.gpf_builder.services.pdf_service.frappe.get_doc")
-	@patch("gpf_builder.gpf_builder.services.pdf_service.frappe.db.exists")
+	@patch("gpf_builder.services.pdf_service.frappe.get_doc")
+	@patch("gpf_builder.services.pdf_service.frappe.db.exists")
 	def test_validate_pdf_large_rejected(self, mock_db_exists, mock_get_doc):
 		"""
 		Proving large PDF (>2MB) is rejected.
@@ -63,10 +63,10 @@ class TestPDFService(unittest.TestCase):
 		with self.assertRaises(frappe.ValidationError):
 			PDFService.validate_pdf("test_file_name")
 
-	@patch("gpf_builder.gpf_builder.services.pdf_service.frappe.get_doc")
-	@patch("gpf_builder.gpf_builder.services.pdf_service.frappe.db.exists")
-	@patch("gpf_builder.gpf_builder.services.pdf_service.PdfReader")
-	@patch("gpf_builder.gpf_builder.services.pdf_service.os.path.exists")
+	@patch("gpf_builder.services.pdf_service.frappe.get_doc")
+	@patch("gpf_builder.services.pdf_service.frappe.db.exists")
+	@patch("gpf_builder.services.pdf_service.PdfReader")
+	@patch("gpf_builder.services.pdf_service.os.path.exists")
 	def test_validate_pdf_multi_page_rejected(self, mock_os_exists, mock_pdf_reader, mock_db_exists, mock_get_doc):
 		"""
 		Proving multi-page PDF is rejected.

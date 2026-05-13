@@ -13,7 +13,8 @@ dynamic = ["version"]
 dependencies = [
     "google-cloud-vision",
     "beautifulsoup4",
-    "lxml"
+    "lxml",
+    "PyMuPDF"
 ]
 
 [tool.flit.module]

@@ -2,7 +2,7 @@
 import frappe
 import unittest
 import json
-from gpf_builder.gpf_builder.services.layout_service import LayoutService
+from gpf_builder.services.layout_service import LayoutService
 
 class TestLayoutService(unittest.TestCase):
 	def test_validate_style_json_sanitization(self):

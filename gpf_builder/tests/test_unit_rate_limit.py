@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import frappe
 import unittest
-from gpf_builder.gpf_builder.services.rate_limit_service import RateLimitService
-from gpf_builder.gpf_builder.domain.constants import RATE_LIMIT_RUN_OCR
+from gpf_builder.services.rate_limit_service import RateLimitService
+from gpf_builder.domain.constants import RATE_LIMIT_RUN_OCR
 
 class TestRateLimit(unittest.TestCase):
 	def setUp(self):

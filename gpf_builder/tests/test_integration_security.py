@@ -2,14 +2,14 @@
 import frappe
 import unittest
 import json
-from gpf_builder.gpf_builder.api.api import (
+from gpf_builder.api.api import (
 	save_layout, 
 	finalize_setup, 
 	upload_pdf_reference,
 	get_dunning_letter_fields,
 	run_ocr
 )
-from gpf_builder.gpf_builder.domain.constants import (
+from gpf_builder.domain.constants import (
 	SETUP_STATUS_FINALIZED,
 	ERROR_ACCESS_DENIED
 )

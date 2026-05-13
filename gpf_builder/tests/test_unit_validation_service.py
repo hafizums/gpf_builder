@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import frappe
 import unittest
-from gpf_builder.gpf_builder.services.validation_service import ValidationService
+from gpf_builder.services.validation_service import ValidationService
 
 class TestValidationService(unittest.TestCase):
 	def setUp(self):

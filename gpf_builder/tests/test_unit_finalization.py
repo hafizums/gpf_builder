@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import frappe
 import unittest
-from gpf_builder.gpf_builder.services.finalization_service import FinalizationService
-from gpf_builder.gpf_builder.services.layout_service import LayoutService
-from gpf_builder.gpf_builder.domain.constants import SETUP_STATUS_FINALIZED, SETUP_STATUS_EDITING
+from gpf_builder.services.finalization_service import FinalizationService
+from gpf_builder.services.layout_service import LayoutService
+from gpf_builder.domain.constants import SETUP_STATUS_FINALIZED, SETUP_STATUS_EDITING
 
 class TestFinalization(unittest.TestCase):
 	def setUp(self):

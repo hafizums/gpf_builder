@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import frappe
-from gpf_builder.gpf_builder.domain.constants import TARGET_DOCTYPE
+from gpf_builder.domain.constants import TARGET_DOCTYPE
 
 class FieldMappingService:
 	# Fields to exclude from mapping (system/internal)

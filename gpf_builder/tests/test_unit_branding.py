@@ -2,11 +2,11 @@
 import frappe
 import unittest
 from unittest.mock import patch, MagicMock
-from gpf_builder.gpf_builder.services.branding_service import BrandingService
+from gpf_builder.services.branding_service import BrandingService
 
 class TestBrandingService(unittest.TestCase):
-	@patch("gpf_builder.gpf_builder.services.branding_service.frappe.get_doc")
-	@patch("gpf_builder.gpf_builder.services.branding_service.frappe.db.exists")
+	@patch("gpf_builder.services.branding_service.frappe.get_doc")
+	@patch("gpf_builder.services.branding_service.frappe.db.exists")
 	def test_validate_image_success(self, mock_db_exists, mock_get_doc):
 		"""
 		Proving valid PNG image is accepted.
@@ -19,8 +19,8 @@ class TestBrandingService(unittest.TestCase):
 		
 		self.assertTrue(BrandingService.validate_image("test_file"))
 
-	@patch("gpf_builder.gpf_builder.services.branding_service.frappe.get_doc")
-	@patch("gpf_builder.gpf_builder.services.branding_service.frappe.db.exists")
+	@patch("gpf_builder.services.branding_service.frappe.get_doc")
+	@patch("gpf_builder.services.branding_service.frappe.db.exists")
 	def test_validate_image_invalid_type(self, mock_db_exists, mock_get_doc):
 		"""
 		Proving invalid type (e.g., .webp) is rejected.
@@ -34,8 +34,8 @@ class TestBrandingService(unittest.TestCase):
 		with self.assertRaises(frappe.ValidationError):
 			BrandingService.validate_image("test_file")
 
-	@patch("gpf_builder.gpf_builder.services.branding_service.frappe.get_doc")
-	@patch("gpf_builder.gpf_builder.services.branding_service.frappe.db.exists")
+	@patch("gpf_builder.services.branding_service.frappe.get_doc")
+	@patch("gpf_builder.services.branding_service.frappe.db.exists")
 	def test_sanitize_svg_unsafe_script(self, mock_db_exists, mock_get_doc):
 		"""
 		Proving SVG with <script> is rejected.
@@ -50,8 +50,8 @@ class TestBrandingService(unittest.TestCase):
 		with self.assertRaises(frappe.SecurityError):
 			BrandingService.validate_image("test_file")
 
-	@patch("gpf_builder.gpf_builder.services.branding_service.frappe.get_doc")
-	@patch("gpf_builder.gpf_builder.services.branding_service.frappe.db.exists")
+	@patch("gpf_builder.services.branding_service.frappe.get_doc")
+	@patch("gpf_builder.services.branding_service.frappe.db.exists")
 	def test_sanitize_svg_unsafe_handler(self, mock_db_exists, mock_get_doc):
 		"""
 		Proving SVG with event handler is rejected.

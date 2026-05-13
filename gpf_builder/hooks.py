@@ -11,10 +11,6 @@ app_license = "MIT"
 # app_include_js = "/assets/gpf_builder/js/gpf_builder.js"
 # app_include_css = "/assets/gpf_builder/css/gpf_builder.css"
 
-# Desk Page
-# ---------
-page_js = {"gpf_builder": "public/js/gpf_builder.js"}
-
 # Permissions
 # -----------
 # Permissions are handled via AccessControlService and api_guard

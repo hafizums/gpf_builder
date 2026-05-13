@@ -2,13 +2,13 @@
 import frappe
 import unittest
 import json
-from gpf_builder.gpf_builder.api.api import (
+from gpf_builder.api.api import (
 	save_layout, 
 	finalize_setup, 
 	upload_pdf_reference,
 	get_preview
 )
-from gpf_builder.gpf_builder.services.output_service import OutputService
+from gpf_builder.services.output_service import OutputService
 
 class TestIntegrationWorkflow(unittest.TestCase):
 	def setUp(self):

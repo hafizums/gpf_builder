@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import frappe
 import unittest
-from gpf_builder.gpf_builder.services.setup_service import SetupService
-from gpf_builder.gpf_builder.domain.constants import TARGET_DOCTYPE, SETUP_STATUS_EDITING, SETUP_STATUS_FINALIZED
+from gpf_builder.services.setup_service import SetupService
+from gpf_builder.domain.constants import TARGET_DOCTYPE, SETUP_STATUS_EDITING, SETUP_STATUS_FINALIZED
 
 class TestSetupService(unittest.TestCase):
 	def setUp(self):

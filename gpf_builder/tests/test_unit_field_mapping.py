@@ -2,10 +2,10 @@
 import frappe
 import unittest
 from unittest.mock import patch, MagicMock
-from gpf_builder.gpf_builder.services.field_mapping_service import FieldMappingService
+from gpf_builder.services.field_mapping_service import FieldMappingService
 
 class TestFieldMapping(unittest.TestCase):
-	@patch("gpf_builder.gpf_builder.services.field_mapping_service.frappe.get_meta")
+	@patch("gpf_builder.services.field_mapping_service.frappe.get_meta")
 	def test_get_allowed_fields_filtering(self, mock_get_meta):
 		"""
 		Proving that forbidden fields and non-data fieldtypes are filtered out.
@@ -28,7 +28,7 @@ class TestFieldMapping(unittest.TestCase):
 		self.assertNotIn("creation", fieldnames)
 		self.assertNotIn("section_break_1", fieldnames)
 
-	@patch("gpf_builder.gpf_builder.services.field_mapping_service.FieldMappingService.get_allowed_fields")
+	@patch("gpf_builder.services.field_mapping_service.FieldMappingService.get_allowed_fields")
 	def test_validate_fieldname(self, mock_get_allowed):
 		"""
 		Proving fieldname validation works against the allowed list.

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import frappe
 from frappe.utils import now_datetime
-from gpf_builder.gpf_builder.domain.constants import (
+from gpf_builder.domain.constants import (
 	SETUP_STATUS_EDITING, 
 	SETUP_STATUS_FINALIZED,
 	BLOCK_TYPE_OCR_TEXT
 )
-from gpf_builder.gpf_builder.services.setup_service import SetupService
-from gpf_builder.gpf_builder.services.version_service import VersionService
+from gpf_builder.services.setup_service import SetupService
+from gpf_builder.services.version_service import VersionService
 
 class FinalizationService:
 	@staticmethod

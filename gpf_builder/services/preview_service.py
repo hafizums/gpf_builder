@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import frappe
 import json
-from gpf_builder.gpf_builder.services.layout_service import LayoutService
-from gpf_builder.gpf_builder.domain.constants import (
+from frappe.utils import escape_html
+from gpf_builder.services.layout_service import LayoutService
+from gpf_builder.services.field_mapping_service import FieldMappingService
+from gpf_builder.domain.constants import (
+	TARGET_DOCTYPE,
 	BLOCK_TYPE_STATIC_TEXT,
 	BLOCK_TYPE_DYNAMIC_FIELD,
 	BLOCK_TYPE_OCR_TEXT,
@@ -12,13 +15,14 @@ from gpf_builder.gpf_builder.domain.constants import (
 
 class PreviewService:
 	@staticmethod
-	def generate_preview_html(setup_name):
+	def generate_preview_html(setup_name, docname=None):
 		"""
 		Generates a sanitized HTML preview of the current layout.
-		Injects redacted sample data for Dunning Letter placeholders.
+		Uses the selected Dunning Letter document when provided, otherwise
+		injects redacted sample data for placeholders.
 		"""
 		blocks = LayoutService.get_layout(setup_name)
-		sample_data = PreviewService.get_redacted_sample_data()
+		sample_data = PreviewService.get_document_data(docname) if docname else PreviewService.get_redacted_sample_data()
 		
 		# Base container mimics an A4 page aspect ratio (roughly 1:1.41)
 		html = [
@@ -55,24 +59,41 @@ class PreviewService:
 		Renders the inner content of a block based on its type.
 		"""
 		if block.block_type == BLOCK_TYPE_STATIC_TEXT:
-			return block.static_text or ""
+			return escape_html(block.static_text or "")
 			
 		elif block.block_type == BLOCK_TYPE_DYNAMIC_FIELD:
 			val = sample_data.get(block.fieldname, "[{0}]".format(block.fieldname))
-			return "<span>{0}</span>".format(val)
+			return "<span>{0}</span>".format(escape_html(val))
 			
 		elif block.block_type == BLOCK_TYPE_OCR_TEXT:
 			# For preview, we show the normalized text if available
 			normalized_text = frappe.db.get_value("GPF OCR Result", block.ocr_result, "normalized_text") if block.ocr_result else ""
-			return "<span>{0}</span>".format(normalized_text or "[OCR Text]")
+			return "<span>{0}</span>".format(escape_html(normalized_text or "[OCR Text]"))
 			
 		elif block.block_type == BLOCK_TYPE_IMAGE or block.block_type == BLOCK_TYPE_BRANDING:
 			if block.file_reference:
 				file_url = frappe.db.get_value("File", block.file_reference, "file_url")
-				return '<img src="{0}" style="width:100%; height:100%; object-fit:contain;" />'.format(file_url)
+				if not file_url:
+					file_url = block.file_reference
+				return '<img src="{0}" style="width:100%; height:100%; object-fit:contain;" />'.format(escape_html(file_url))
 			return "[Image Placeholder]"
 			
 		return ""
+
+	@staticmethod
+	def get_document_data(docname):
+		if not frappe.db.exists(TARGET_DOCTYPE, docname):
+			frappe.throw(frappe._("Dunning Letter document not found."), frappe.DoesNotExistError)
+
+		doc = frappe.get_doc(TARGET_DOCTYPE, docname)
+		data = {}
+		for field in FieldMappingService.get_allowed_fields():
+			fieldname = field["fieldname"]
+			try:
+				data[fieldname] = doc.get_formatted(fieldname)
+			except Exception:
+				data[fieldname] = frappe.utils.cstr(doc.get(fieldname) or "")
+		return data
 
 	@staticmethod
 	def get_redacted_sample_data():

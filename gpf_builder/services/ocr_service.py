@@ -2,7 +2,9 @@
 import frappe
 import re
 import json
-from gpf_builder.gpf_builder.domain.constants import ERROR_OCR_NOT_CONFIGURED, ERROR_OCR_PROVIDER_FAILED
+import os
+from gpf_builder.domain.constants import ERROR_OCR_NOT_CONFIGURED, ERROR_OCR_PROVIDER_FAILED
+from gpf_builder.services.pdf_service import PDFService
 
 class OCRService:
 	@staticmethod
@@ -11,9 +13,10 @@ class OCRService:
 		Main entry point for running OCR on a PDF reference.
 		Orchestrates API call, normalization, and persistence.
 		"""
-		# 1. Fetch file record
-		file_doc = frappe.get_doc("File", file_name)
-		content = file_doc.get_content()
+		# 1. Fetch file record and render the first PDF page to an image.
+		# Google Vision's images:annotate endpoint expects image bytes, not raw PDF bytes.
+		file_doc = PDFService.get_file_doc(file_name)
+		content = OCRService.render_pdf_first_page(file_doc)
 		
 		# 2. Call Google Vision API
 		raw_text = OCRService.call_google_vision(content)
@@ -28,7 +31,7 @@ class OCRService:
 		ocr_res = frappe.get_doc({
 			"doctype": "GPF OCR Result",
 			"setup": setup_name,
-			"source_pdf_file": file_name,
+			"source_pdf_file": file_doc.name,
 			"raw_text": raw_text,
 			"normalized_text": normalized_text,
 			"confirmed": 0
@@ -36,6 +39,106 @@ class OCRService:
 		ocr_res.insert(ignore_permissions=True)
 		
 		return ocr_res.name
+
+	@staticmethod
+	def run_ocr_region(file_name, setup_name, region):
+		"""
+		Run OCR against a rectangular region of the first PDF page.
+		Region coordinates are percentages of the page: x, y, width, height.
+		"""
+		file_doc = PDFService.get_file_doc(file_name)
+		content = OCRService.render_pdf_first_page(file_doc, region)
+		raw_text = OCRService.call_google_vision(content)
+
+		if not raw_text:
+			frappe.throw(frappe._("OCR failed: No text detected in the selected block."), frappe.ValidationError)
+
+		normalized_text = OCRService.normalize_text(raw_text)
+		ocr_res = frappe.get_doc({
+			"doctype": "GPF OCR Result",
+			"setup": setup_name,
+			"source_pdf_file": file_doc.name,
+			"raw_text": raw_text,
+			"normalized_text": normalized_text,
+			"confirmed": 0
+		})
+		ocr_res.insert(ignore_permissions=True)
+
+		return ocr_res.name
+
+	@staticmethod
+	def render_pdf_first_page(file_doc, region=None):
+		"""
+		Render the first page of the single-page reference PDF to PNG bytes.
+		PyMuPDF is used because Google Vision's image OCR endpoint cannot
+		reliably process raw PDF bytes.
+		"""
+		try:
+			import fitz
+		except ImportError:
+			frappe.throw(
+				frappe._("OCR requires PyMuPDF. Run: bench pip install PyMuPDF"),
+				frappe.ValidationError,
+				ERROR_OCR_NOT_CONFIGURED
+			)
+
+		file_path = frappe.get_site_path(file_doc.file_url.strip("/"))
+		if not os.path.exists(file_path):
+			file_path = (
+				frappe.get_site_path("private", "files", file_doc.file_name)
+				if file_doc.is_private
+				else frappe.get_site_path("public", "files", file_doc.file_name)
+			)
+
+		if not os.path.exists(file_path):
+			frappe.throw(frappe._("PDF file not found on disk."), frappe.DoesNotExistError)
+
+		try:
+			pdf = fitz.open(file_path)
+			if pdf.page_count < 1:
+				frappe.throw(frappe._("PDF has no pages."), frappe.ValidationError)
+
+			page = pdf.load_page(0)
+			matrix = fitz.Matrix(2, 2)
+			clip = OCRService.get_region_clip(page.rect, region) if region else None
+			pixmap = page.get_pixmap(matrix=matrix, alpha=False, clip=clip)
+			return pixmap.tobytes("png")
+		except Exception as e:
+			if isinstance(e, frappe.ValidationError):
+				raise
+			frappe.log_error(frappe.get_traceback(), "GPF Builder PDF Render Error")
+			frappe.throw(frappe._("Failed to render PDF page for OCR."), frappe.ValidationError)
+		finally:
+			try:
+				pdf.close()
+			except Exception:
+				pass
+
+	@staticmethod
+	def get_region_clip(page_rect, region):
+		x = float(region.get("x", 0))
+		y = float(region.get("y", 0))
+		width = float(region.get("width", 0))
+		height = float(region.get("height", 0))
+
+		if x < 0 or y < 0 or width <= 0 or height <= 0 or x + width > 100 or y + height > 100:
+			frappe.throw(frappe._("Invalid OCR block region."), frappe.ValidationError)
+
+		left = page_rect.x0 + (x / 100) * page_rect.width
+		top = page_rect.y0 + (y / 100) * page_rect.height
+		right = left + (width / 100) * page_rect.width
+		bottom = top + (height / 100) * page_rect.height
+
+		try:
+			import fitz
+		except ImportError:
+			frappe.throw(
+				frappe._("OCR requires PyMuPDF. Run: bench pip install PyMuPDF"),
+				frappe.ValidationError,
+				ERROR_OCR_NOT_CONFIGURED
+			)
+
+		return fitz.Rect(left, top, right, bottom)
 
 	@staticmethod
 	def normalize_text(text):
@@ -71,7 +174,11 @@ class OCRService:
 		creds_json = frappe.conf.get("google_vision_credentials")
 
 		if not api_key and not creds_json:
-			frappe.throw(frappe._("Google Vision OCR is not configured. Add 'google_api_key' or 'google_vision_credentials' to site config."), ERROR_OCR_NOT_CONFIGURED)
+			frappe.throw(
+				frappe._("Google Vision OCR is not configured. Add 'google_api_key' or 'google_vision_credentials' to site config."),
+				frappe.ValidationError,
+				ERROR_OCR_NOT_CONFIGURED
+			)
 
 		try:
 			if api_key:

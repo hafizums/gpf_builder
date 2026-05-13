@@ -2,7 +2,7 @@
 import frappe
 import unittest
 import hashlib
-from gpf_builder.gpf_builder.services.audit_log_service import AuditLogService
+from gpf_builder.services.audit_log_service import AuditLogService
 
 class TestAuditLog(unittest.TestCase):
 	def test_audit_log_hashing(self):

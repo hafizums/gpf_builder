@@ -1,0 +1,60 @@
+<div class="gpf-builder-wrapper">
+	<!-- Toolbar -->
+	<div class="gpf-toolbar">
+		<div class="toolbar-section">
+			<button class="btn btn-primary btn-sm" id="btn-save">
+				<i class="fa fa-save"></i> Save Layout
+			</button>
+			<button class="btn btn-default btn-sm" id="btn-preview">
+				<i class="fa fa-eye"></i> Preview
+			</button>
+			<button class="btn btn-default btn-sm" id="btn-history">
+				<i class="fa fa-history"></i> History
+			</button>
+		</div>
+		<div class="toolbar-section">
+			<button class="btn btn-default btn-sm" id="btn-add-text">
+				<i class="fa fa-plus"></i> Static Text
+			</button>
+			<button class="btn btn-default btn-sm" id="btn-add-field">
+				<i class="fa fa-database"></i> Dynamic Field
+			</button>
+			<button class="btn btn-default btn-sm" id="btn-ocr">
+				<i class="fa fa-magic"></i> Run OCR
+			</button>
+		</div>
+		<div class="toolbar-section pull-right">
+			<button class="btn btn-warning btn-sm" id="btn-edit" style="display:none;">
+				<i class="fa fa-pencil"></i> Return to Editing
+			</button>
+			<button class="btn btn-success btn-sm" id="btn-finalize">
+				<i class="fa fa-check"></i> Finalize
+			</button>
+		</div>
+	</div>
+
+	<div class="gpf-main-container">
+		<!-- Canvas Area -->
+		<div class="gpf-canvas-column">
+			<div id="gpf-canvas-container">
+				<!-- Konva Stage will be injected here -->
+			</div>
+			<div id="pdf-render-canvas-hidden" style="display:none;"></div>
+		</div>
+
+		<!-- Property / Control Panel -->
+		<div class="gpf-property-panel">
+			<div class="panel-header">Properties</div>
+			<div id="gpf-properties-content">
+				<div class="text-muted text-center" style="padding: 20px;">
+					Select a block to edit properties.
+				</div>
+			</div>
+			
+			<div class="panel-header" style="margin-top: 20px;">Reference Data</div>
+			<div id="gpf-reference-content">
+				<!-- Setup info, PDF info -->
+			</div>
+		</div>
+	</div>
+</div>

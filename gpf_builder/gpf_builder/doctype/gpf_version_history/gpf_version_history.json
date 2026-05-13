@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-13 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "setup",
+  "version_number",
+  "event_type",
+  "change_summary",
+  "layout_snapshot_json",
+  "generated_output_snapshot",
+  "created_by",
+  "created_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "setup",
+   "fieldtype": "Link",
+   "label": "Setup",
+   "options": "GPF Print Format Setup",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version Number",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Select",
+   "label": "Event Type",
+   "options": "Save\nFinalize\nReturn to Editing",
+   "reqd": 1
+  },
+  {
+   "fieldname": "change_summary",
+   "fieldtype": "Small Text",
+   "label": "Change Summary"
+  },
+  {
+   "fieldname": "layout_snapshot_json",
+   "fieldtype": "Code",
+   "label": "Layout Snapshot JSON",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "generated_output_snapshot",
+   "fieldtype": "Code",
+   "label": "Generated Output Snapshot",
+   "options": "HTML",
+   "read_only": 1
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "read_only": 1
+  }
+ ],
+ "index_pages": [],
+ "links": [],
+ "modified": "2026-05-13 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "GPF Builder",
+ "name": "GPF Version History",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

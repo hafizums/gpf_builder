@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:GPF-.YYYYMMDD.-.###",
+ "creation": "2026-05-13 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "setup_section",
+  "status",
+  "target_doctype",
+  "pdf_reference_file",
+  "preview_section",
+  "preview_generated_at",
+  "similarity_confirmed",
+  "similarity_confirmed_by",
+  "similarity_confirmed_at",
+  "finalization_section",
+  "finalized_at",
+  "final_output_valid"
+ ],
+ "fields": [
+  {
+   "fieldname": "setup_section",
+   "fieldtype": "Section Break",
+   "label": "Setup"
+  },
+  {
+   "default": "Editing",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Editing\nFinalized",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Dunning Letter",
+   "fieldname": "target_doctype",
+   "fieldtype": "Data",
+   "label": "Target DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pdf_reference_file",
+   "fieldtype": "Attach",
+   "label": "PDF Reference File"
+  },
+  {
+   "fieldname": "preview_section",
+   "fieldtype": "Section Break",
+   "label": "Preview & Similarity"
+  },
+  {
+   "fieldname": "preview_generated_at",
+   "fieldtype": "Datetime",
+   "label": "Preview Generated At",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "similarity_confirmed",
+   "fieldtype": "Check",
+   "label": "90% Similarity Confirmed"
+  },
+  {
+   "fieldname": "similarity_confirmed_by",
+   "fieldtype": "Link",
+   "label": "Similarity Confirmed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "similarity_confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "Similarity Confirmed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finalization_section",
+   "fieldtype": "Section Break",
+   "label": "Finalization"
+  },
+  {
+   "fieldname": "finalized_at",
+   "fieldtype": "Datetime",
+   "label": "Finalized At",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "final_output_valid",
+   "fieldtype": "Check",
+   "label": "Final Output Valid",
+   "read_only": 1
+  }
+ ],
+ "index_pages": [],
+ "links": [],
+ "modified": "2026-05-13 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "GPF Builder",
+ "name": "GPF Print Format Setup",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-13 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "setup",
+  "source_pdf_file",
+  "raw_text",
+  "normalized_text",
+  "confirmed",
+  "confirmed_by",
+  "confirmed_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "setup",
+   "fieldtype": "Link",
+   "label": "Setup",
+   "options": "GPF Print Format Setup",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_pdf_file",
+   "fieldtype": "Link",
+   "label": "Source PDF File",
+   "options": "File",
+   "reqd": 1
+  },
+  {
+   "fieldname": "raw_text",
+   "fieldtype": "Text",
+   "label": "Raw OCR Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "normalized_text",
+   "fieldtype": "Text",
+   "label": "Normalized Text"
+  },
+  {
+   "default": "0",
+   "fieldname": "confirmed",
+   "fieldtype": "Check",
+   "label": "Confirmed"
+  },
+  {
+   "fieldname": "confirmed_by",
+   "fieldtype": "Link",
+   "label": "Confirmed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "Confirmed At",
+   "read_only": 1
+  }
+ ],
+ "index_pages": [],
+ "links": [],
+ "modified": "2026-05-13 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "GPF Builder",
+ "name": "GPF OCR Result",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

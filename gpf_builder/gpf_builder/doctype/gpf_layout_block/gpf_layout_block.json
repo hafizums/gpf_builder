@@ -1,0 +1,132 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-13 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "setup",
+  "block_type",
+  "coords_section",
+  "x",
+  "y",
+  "width",
+  "height",
+  "z_index",
+  "content_section",
+  "static_text",
+  "ocr_result",
+  "fieldname",
+  "file_reference",
+  "style_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "setup",
+   "fieldtype": "Link",
+   "label": "Setup",
+   "options": "GPF Print Format Setup",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "block_type",
+   "fieldtype": "Select",
+   "label": "Block Type",
+   "options": "Static Text\nDynamic Field\nOCR Text\nImage\nBranding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "coords_section",
+   "fieldtype": "Section Break",
+   "label": "Coordinates"
+  },
+  {
+   "fieldname": "x",
+   "fieldtype": "Float",
+   "label": "X",
+   "reqd": 1
+  },
+  {
+   "fieldname": "y",
+   "fieldtype": "Float",
+   "label": "Y",
+   "reqd": 1
+  },
+  {
+   "fieldname": "width",
+   "fieldtype": "Float",
+   "label": "Width",
+   "reqd": 1
+  },
+  {
+   "fieldname": "height",
+   "fieldtype": "Float",
+   "label": "Height",
+   "reqd": 1
+  },
+  {
+   "fieldname": "z_index",
+   "fieldtype": "Int",
+   "label": "Z-Index"
+  },
+  {
+   "fieldname": "content_section",
+   "fieldtype": "Section Break",
+   "label": "Content"
+  },
+  {
+   "fieldname": "static_text",
+   "fieldtype": "Text",
+   "label": "Static Text"
+  },
+  {
+   "fieldname": "ocr_result",
+   "fieldtype": "Link",
+   "label": "OCR Result",
+   "options": "GPF OCR Result"
+  },
+  {
+   "fieldname": "fieldname",
+   "fieldtype": "Data",
+   "label": "Fieldname"
+  },
+  {
+   "fieldname": "file_reference",
+   "fieldtype": "Link",
+   "label": "File Reference",
+   "options": "File"
+  },
+  {
+   "fieldname": "style_json",
+   "fieldtype": "Code",
+   "label": "Style JSON",
+   "options": "JSON"
+  }
+ ],
+ "index_pages": [],
+ "links": [],
+ "modified": "2026-05-13 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "GPF Builder",
+ "name": "GPF Layout Block",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

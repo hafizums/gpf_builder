@@ -1,0 +1,16 @@
+{
+	"standard": "Yes",
+	"module": "GPF Builder",
+	"name": "gpf_builder",
+	"page_name": "gpf-builder",
+	"title": "GPF Print Format Builder",
+	"roles": [
+		{
+			"role": "Administrator"
+		}
+	],
+	"doctype": "Page",
+	"modified": "2026-05-13 13:26:00.000000",
+	"creation": "2026-05-13 13:26:00.000000",
+	"owner": "Administrator"
+}

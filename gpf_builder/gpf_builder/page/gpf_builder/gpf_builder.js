@@ -1532,6 +1532,10 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 			return /<\/?[a-z][\s\S]*>/i.test(String(value || ""));
 		}
 
+		has_html_entities(value) {
+			return /&(?:[a-zA-Z][a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);/.test(String(value || ""));
+		}
+
 		sanitize_static_html_for_preview(value) {
 			const container = document.createElement("div");
 			container.innerHTML = String(value || "");
@@ -1554,7 +1558,7 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 		render_static_html_for_builder(value) {
 			const raw = String(value || "");
 			const safe_html = this.sanitize_static_html_for_preview(raw);
-			if (this.has_html_tags(safe_html)) {
+			if (this.has_html_tags(safe_html) || this.has_html_entities(safe_html)) {
 				return safe_html;
 			}
 			return `<span class="gpf-builder-plain-text">${this.escape_html(raw)}</span>`;

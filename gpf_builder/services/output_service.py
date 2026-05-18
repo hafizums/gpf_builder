@@ -30,13 +30,37 @@ class OutputService:
 		
 		html = [
 			PreviewService.get_shared_print_css(),
+			OutputService.get_block_css(blocks),
 			'<div class="gpf-output-container gpf-print-root">'
 		]
 		
-		for block in blocks:
+		for index, block in enumerate(blocks, start=1):
 			content = OutputService._render_production_content(block, doc)
-			style_dict = json.loads(block.style_json or "{}")
+			html.append('\t<div class="{0}">{1}</div>'.format(
+				OutputService.get_block_classes(block, index),
+				content
+			))
 			
+		html.append('</div>')
+		return "\n".join(html)
+
+	@staticmethod
+	def format_inline_style(styles):
+		return "; ".join(["{0}: {1}".format(k, v) for k, v in styles.items()])
+
+	@staticmethod
+	def get_block_classes(block, index):
+		classes = ["gpf-block", "gpf-print-block", "gpf-output-block-{0}".format(index)]
+		style_dict = json.loads(block.style_json or "{}")
+		if style_dict.get("text-align") == "justify":
+			classes.append("gpf-justify-block")
+		return " ".join(classes)
+
+	@staticmethod
+	def get_block_css(blocks):
+		rules = ["<style>"]
+		for index, block in enumerate(blocks, start=1):
+			style_dict = json.loads(block.style_json or "{}")
 			base_styles = {
 				"position": "absolute",
 				"left": "{0}%".format(block.x),
@@ -51,20 +75,17 @@ class OutputService:
 				"color": "#1f2937",
 				"text-align": "left"
 			}
+			PreviewService.apply_edge_image_bleed(block, base_styles)
 			base_styles.update(style_dict)
 			if base_styles.get("text-align") == "justify":
 				base_styles.pop("text-align-last", None)
-			
-			style_str = OutputService.format_inline_style(base_styles)
-			
-			html.append('\t<div class="gpf-block gpf-print-block" style="{0}">{1}</div>'.format(style_str, content))
-			
-		html.append('</div>')
-		return "\n".join(html)
 
-	@staticmethod
-	def format_inline_style(styles):
-		return "; ".join(["{0}: {1}".format(k, v) for k, v in styles.items()])
+			rules.append("\t.gpf-output-block-{0} {{ {1}; }}".format(
+				index,
+				OutputService.format_inline_style(base_styles)
+			))
+		rules.append("</style>")
+		return "\n".join(rules)
 
 	@staticmethod
 	def _render_production_content(block, doc):

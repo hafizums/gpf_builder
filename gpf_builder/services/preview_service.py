@@ -16,6 +16,7 @@ from gpf_builder.domain.constants import (
 
 class PreviewService:
 	HTML_TAG_PATTERN = re.compile(r"<[^>]+>")
+	HTML_ENTITY_PATTERN = re.compile(r"&(?:[a-zA-Z][a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);")
 
 	@staticmethod
 	def generate_preview_html(setup_name, docname=None):
@@ -52,16 +53,39 @@ class PreviewService:
 				"color": "#1f2937",
 				"text-align": "left"
 			}
+			PreviewService.apply_edge_image_bleed(block, base_styles)
 			base_styles.update(style_dict)
+			block_classes = ["gpf-block", "gpf-print-block"]
 			if base_styles.get("text-align") == "justify":
+				block_classes.append("gpf-justify-block")
 				base_styles.pop("text-align-last", None)
 			
 			style_str = "; ".join(["{0}: {1}".format(k, v) for k, v in base_styles.items()])
 			
-			html.append('<div class="gpf-block gpf-print-block" style="{0}">{1}</div>'.format(style_str, content))
+			html.append('<div class="{0}" style="{1}">{2}</div>'.format(" ".join(block_classes), style_str, content))
 			
 		html.append('</div>')
 		return "".join(html)
+
+	@staticmethod
+	def apply_edge_image_bleed(block, styles):
+		"""
+		Render-only bleed prevents sub-pixel seams when an image is intended
+		to touch the right or bottom page edge. Saved block coordinates stay unchanged.
+		"""
+		if block.block_type not in [BLOCK_TYPE_IMAGE, BLOCK_TYPE_BRANDING]:
+			return
+
+		x = float(block.x or 0)
+		y = float(block.y or 0)
+		width = float(block.width or 0)
+		height = float(block.height or 0)
+		bleed = 0.5
+
+		if x + width >= 99:
+			styles["width"] = "{0}%".format((100 - x) + bleed)
+		if y + height >= 99:
+			styles["height"] = "{0}%".format((100 - y) + bleed)
 
 	@staticmethod
 	def get_shared_print_css():
@@ -126,9 +150,11 @@ class PreviewService:
 			"  }\n"
 			"\n"
 			"  .gpf-output-container {\n"
-			"    width: 210mm;\n"
-			"    height: 297mm;\n"
+			"    width: 800px;\n"
+			"    height: 1131px;\n"
 			"    padding: 0;\n"
+			"    transform: scale(0.9921259843);\n"
+			"    transform-origin: top left;\n"
 			"  }\n"
 			"\n"
 			"  .gpf-print-block {\n"
@@ -147,6 +173,10 @@ class PreviewService:
 			"    overflow-wrap: break-word;\n"
 			"    text-align: inherit;\n"
 			"    text-align-last: inherit;\n"
+			"  }\n"
+			"\n"
+			"  .gpf-justify-block span {\n"
+			"    white-space: normal;\n"
 			"  }\n"
 			"\n"
 			"  .gpf-print-block img {\n"
@@ -189,7 +219,10 @@ class PreviewService:
 	@staticmethod
 	def render_static_html(value):
 		safe_html = LayoutService.sanitize_static_html(value)
-		if PreviewService.HTML_TAG_PATTERN.search(safe_html or ""):
+		if (
+			PreviewService.HTML_TAG_PATTERN.search(safe_html or "")
+			or PreviewService.HTML_ENTITY_PATTERN.search(safe_html or "")
+		):
 			return safe_html
 		return "<span>{0}</span>".format(escape_html(safe_html or ""))
 

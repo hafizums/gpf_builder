@@ -15,7 +15,8 @@ from gpf_builder.services.rate_limit_service import RateLimitService
 from gpf_builder.services.audit_log_service import AuditLogService
 from gpf_builder.services.validation_service import ValidationService
 from gpf_builder.domain.constants import (
-	TARGET_DOCTYPE,
+	BLOCK_TYPE_IMAGE,
+	BLOCK_TYPE_BRANDING,
 	RATE_LIMIT_UPLOAD_PDF,
 	RATE_LIMIT_RUN_OCR,
 	RATE_LIMIT_GENERATE_PREVIEW,
@@ -48,31 +49,74 @@ def upload_pdf_reference(file_name):
 	return {"status": "success", "meta": meta}
 
 @frappe.whitelist()
-def get_dunning_letter_fields():
+def get_target_fields():
 	"""
-	Returns allowed field mapping for Dunning Letter.
+	Returns allowed field mapping for the active setup target DocType.
 	"""
 	api_guard()
-	return FieldMappingService.get_allowed_fields()
+	setup = SetupService.get_active_setup()
+	return FieldMappingService.get_allowed_fields(setup.target_doctype)
 
 @frappe.whitelist()
-def get_dunning_letter_doc_values(docname):
+def set_target_doctype(target_doctype):
 	"""
-	Returns printable values from a selected Dunning Letter document.
+	Sets the active builder target DocType and clears incompatible setup state.
 	"""
 	api_guard()
-	if not docname or not frappe.db.exists(TARGET_DOCTYPE, docname):
-		frappe.throw(frappe._("Dunning Letter document not found."), frappe.DoesNotExistError)
+	if not target_doctype or not frappe.db.exists("DocType", target_doctype):
+		frappe.throw(frappe._("Target DocType is required and must exist."), frappe.ValidationError)
 
-	doc = frappe.get_doc(TARGET_DOCTYPE, docname)
+	setup = SetupService.get_active_setup()
+	SetupService.validate_editing_state(setup)
+
+	if setup.target_doctype == target_doctype:
+		return {"status": "success", "target_doctype": setup.target_doctype}
+
+	frappe.db.delete("GPF Layout Block", {"setup": setup.name})
+	frappe.db.delete("GPF OCR Result", {"setup": setup.name})
+	setup.target_doctype = target_doctype
+	setup.pdf_reference_file = None
+	setup.save(ignore_permissions=True)
+
+	AuditLogService.log_event("SET_TARGET_DOCTYPE", "Changed target DocType to {0}.".format(target_doctype))
+
+	return {"status": "success", "target_doctype": setup.target_doctype}
+
+@frappe.whitelist()
+def get_dunning_letter_fields():
+	"""
+	Backward-compatible wrapper for older frontend/tests.
+	"""
+	return get_target_fields()
+
+@frappe.whitelist()
+def get_target_doc_values(docname):
+	"""
+	Returns printable values from a selected source document for the active
+	setup target DocType.
+	"""
+	api_guard()
+	setup = SetupService.get_active_setup()
+	target_doctype = setup.target_doctype
+	if not docname or not frappe.db.exists(target_doctype, docname):
+		frappe.throw(frappe._("{0} document not found.").format(target_doctype), frappe.DoesNotExistError)
+
+	doc = frappe.get_doc(target_doctype, docname)
 	values = {}
-	for field in FieldMappingService.get_allowed_fields():
+	for field in FieldMappingService.get_allowed_fields(target_doctype):
 		fieldname = field["fieldname"]
 		try:
 			values[fieldname] = doc.get_formatted(fieldname)
 		except Exception:
 			values[fieldname] = frappe.utils.cstr(doc.get(fieldname) or "")
 	return values
+
+@frappe.whitelist()
+def get_dunning_letter_doc_values(docname):
+	"""
+	Backward-compatible wrapper for older frontend/tests.
+	"""
+	return get_target_doc_values(docname)
 
 @frappe.whitelist()
 def run_ocr(file_name, region_json=None):
@@ -161,12 +205,38 @@ def save_layout(blocks_json):
 		if b.get("ocr_result"):
 			ValidationService.validate_setup_scope("GPF OCR Result", b["ocr_result"], setup.name)
 		if b.get("file_reference"):
-			ValidationService.validate_file_scope(b["file_reference"], setup.name)
+			if b.get("block_type") in [BLOCK_TYPE_IMAGE, BLOCK_TYPE_BRANDING]:
+				BrandingService.validate_image(b["file_reference"])
+			else:
+				ValidationService.validate_file_scope(b["file_reference"], setup.name)
 			
-	LayoutService.save_layout_blocks(setup.name, blocks)
+	LayoutService.save_layout_blocks(setup.name, blocks, setup.target_doctype)
 	
 	AuditLogService.log_event("SAVE_LAYOUT", "Saved {0} blocks for setup {1}".format(len(blocks), setup.name))
 	
+	return {"status": "success"}
+
+@frappe.whitelist()
+def reset_setup():
+	"""
+	Resets the active setup to a clean editing state.
+	This clears layout blocks and OCR results and unlinks the PDF reference.
+	Uploaded File documents are not deleted.
+	"""
+	api_guard()
+	RateLimitService.check_limit(RATE_LIMIT_SAVE_LAYOUT)
+
+	setup = SetupService.get_active_setup()
+	SetupService.validate_editing_state(setup)
+
+	frappe.db.delete("GPF Layout Block", {"setup": setup.name})
+	frappe.db.delete("GPF OCR Result", {"setup": setup.name})
+
+	setup.pdf_reference_file = None
+	setup.save(ignore_permissions=True)
+
+	AuditLogService.log_event("RESET_SETUP", "Reset setup {0}.".format(setup.name))
+
 	return {"status": "success"}
 
 @frappe.whitelist()
@@ -195,7 +265,8 @@ def generate_output(docname=None):
 	"""
 	api_guard()
 	RateLimitService.check_limit(RATE_LIMIT_GENERATE_OUTPUT)
-	doc = frappe.get_doc(TARGET_DOCTYPE, docname) if docname else frappe._dict({})
+	setup = SetupService.get_active_setup()
+	doc = frappe.get_doc(setup.target_doctype, docname) if docname else frappe._dict({})
 	return OutputService.generate_final_html(doc)
 
 @frappe.whitelist()

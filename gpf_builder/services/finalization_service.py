@@ -59,7 +59,7 @@ class FinalizationService:
 		"""
 		blocks = frappe.db.get_all("GPF Layout Block", 
 			filters={"setup": setup_name}, 
-			fields=["name", "x", "y", "width", "height"]
+			fields=["name", "block_type", "x", "y", "width", "height", "static_text", "fieldname", "ocr_result", "file_reference"]
 		)
 		
 		for i in range(len(blocks)):
@@ -72,7 +72,56 @@ class FinalizationService:
 					b1.x + b1.width > b2.x and
 					b1.y < b2.y + b2.height and
 					b1.y + b1.height > b2.y):
-					frappe.throw(frappe._("Finalization blocked: Blocks {0} and {1} overlap.").format(b1.name, b2.name))
+					if FinalizationService.is_allowed_overlap(b1, b2):
+						continue
+					frappe.throw(
+						frappe._("Finalization blocked: overlapping blocks found: {0} and {1}. Move or resize one of them before finalizing.").format(
+							FinalizationService.get_block_label(b1),
+							FinalizationService.get_block_label(b2)
+						)
+					)
+
+	@staticmethod
+	def is_allowed_overlap(block_a, block_b):
+		"""
+		Allow harmless layout overlaps for tiny punctuation labels, such as
+		a ':' Static Text block sitting next to or slightly over a value field.
+		Allow media blocks to overlay other content because logos, signatures,
+		stamps, and images are often intentionally layered in print layouts.
+		"""
+		return (
+			FinalizationService.is_punctuation_static_text(block_a)
+			or FinalizationService.is_punctuation_static_text(block_b)
+			or FinalizationService.is_media_block(block_a)
+			or FinalizationService.is_media_block(block_b)
+		)
+
+	@staticmethod
+	def is_media_block(block):
+		return block.block_type in ["Image", "Branding"]
+
+	@staticmethod
+	def is_punctuation_static_text(block):
+		if block.block_type != "Static Text":
+			return False
+
+		text = (block.static_text or "").strip()
+		if not text or len(text) > 3:
+			return False
+
+		return all(char in ":;,.-/()[]{}" for char in text)
+
+	@staticmethod
+	def get_block_label(block):
+		if block.block_type == "Static Text" and block.static_text:
+			return "'{0}'".format(block.static_text[:40])
+		if block.block_type == "Dynamic Field" and block.fieldname:
+			return "field '{0}'".format(block.fieldname)
+		if block.block_type == "OCR Text" and block.ocr_result:
+			return "OCR '{0}'".format(block.ocr_result)
+		if block.block_type in ["Image", "Branding"] and block.file_reference:
+			return "file '{0}'".format(block.file_reference)
+		return "{0} block {1}".format(block.block_type or "Layout", block.name)
 
 	@staticmethod
 	def return_to_editing(setup_name):

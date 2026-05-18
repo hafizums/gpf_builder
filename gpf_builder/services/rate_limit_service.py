@@ -12,8 +12,8 @@ from gpf_builder.domain.constants import (
 )
 
 class RateLimitService:
-	# Design-specified limits (per hour)
-	LIMITS = {
+	DEFAULT_WINDOW_SECONDS = 3600
+	DEFAULT_LIMITS = {
 		RATE_LIMIT_UPLOAD_PDF: 5,
 		RATE_LIMIT_RUN_OCR: 3,
 		RATE_LIMIT_GENERATE_PREVIEW: 30,
@@ -22,6 +22,16 @@ class RateLimitService:
 		RATE_LIMIT_GENERATE_OUTPUT: 30,
 		RATE_LIMIT_RETURN_TO_EDITING: 5
 	}
+	LIMITS = DEFAULT_LIMITS
+	ACTION_SETTING_FIELDS = {
+		RATE_LIMIT_UPLOAD_PDF: "upload_pdf_limit",
+		RATE_LIMIT_RUN_OCR: "run_ocr_limit",
+		RATE_LIMIT_GENERATE_PREVIEW: "generate_preview_limit",
+		RATE_LIMIT_SAVE_LAYOUT: "save_layout_limit",
+		RATE_LIMIT_FINALIZE: "finalize_limit",
+		RATE_LIMIT_GENERATE_OUTPUT: "generate_output_limit",
+		RATE_LIMIT_RETURN_TO_EDITING: "return_to_editing_limit"
+	}
 
 	@staticmethod
 	def check_limit(action):
@@ -29,10 +39,17 @@ class RateLimitService:
 		Checks if the rate limit for a specific action has been exceeded for the current user.
 		Throttles expensive or security-sensitive endpoints.
 		"""
-		if action not in RateLimitService.LIMITS:
+		if action not in RateLimitService.DEFAULT_LIMITS:
 			return
 
-		limit = RateLimitService.LIMITS[action]
+		if not RateLimitService.is_enabled():
+			return
+
+		limit = RateLimitService.get_limit(action)
+		if limit <= 0:
+			return
+
+		window_seconds = RateLimitService.get_window_seconds()
 		# Use a cache key scoped by user and action
 		key = "gpf_rate_limit:{0}:{1}".format(action, frappe.session.user)
 		
@@ -41,14 +58,48 @@ class RateLimitService:
 		
 		if current_count >= limit:
 			frappe.throw(
-				frappe._("Rate limit exceeded for '{0}'. Please try again in an hour.").format(action.replace('_', ' ')),
+				frappe._("Rate limit exceeded for '{0}'. Please try again later.").format(action.replace('_', ' ')),
 				frappe.PermissionError,
 				ERROR_RATE_LIMITED
 			)
 		
-		# Increment and persist for 1 hour
-		# In a real Frappe environment, this would use Redis via frappe.cache()
-		frappe.cache().set_value(key, current_count + 1, expires_in_sec=3600)
+		frappe.cache().set_value(key, current_count + 1, expires_in_sec=window_seconds)
+
+	@staticmethod
+	def get_settings_value(fieldname, default):
+		try:
+			value = frappe.db.get_single_value("GPF Rate Limit Settings", fieldname)
+		except Exception:
+			return default
+
+		if value in [None, ""]:
+			return default
+
+		try:
+			return int(value)
+		except (TypeError, ValueError):
+			return default
+
+	@staticmethod
+	def is_enabled():
+		try:
+			enabled = frappe.db.get_single_value("GPF Rate Limit Settings", "enabled")
+		except Exception:
+			return True
+
+		return bool(enabled)
+
+	@staticmethod
+	def get_limit(action):
+		fieldname = RateLimitService.ACTION_SETTING_FIELDS.get(action)
+		default = RateLimitService.DEFAULT_LIMITS.get(action, 0)
+		if not fieldname:
+			return default
+		return RateLimitService.get_settings_value(fieldname, default)
+
+	@staticmethod
+	def get_window_seconds():
+		return max(1, RateLimitService.get_settings_value("window_seconds", RateLimitService.DEFAULT_WINDOW_SECONDS))
 
 	@staticmethod
 	def clear_limit(action):

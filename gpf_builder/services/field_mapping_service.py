@@ -16,12 +16,12 @@ class FieldMappingService:
 	]
 
 	@staticmethod
-	def get_allowed_fields():
+	def get_allowed_fields(target_doctype=None):
 		"""
-		Retrieves the list of printable fields from the target DocType (Dunning Letter).
+		Retrieves the list of printable fields from the target DocType.
 		Filters out system fields and non-data fieldtypes (e.g., Section Break, Column Break).
 		"""
-		meta = frappe.get_meta(TARGET_DOCTYPE)
+		meta = frappe.get_meta(target_doctype or TARGET_DOCTYPE)
 		allowed_fields = []
 
 		for df in meta.fields:
@@ -40,9 +40,9 @@ class FieldMappingService:
 		return allowed_fields
 
 	@staticmethod
-	def validate_fieldname(fieldname):
+	def validate_fieldname(fieldname, target_doctype=None):
 		"""
 		Validates if a specific fieldname is allowed for use in the layout.
 		"""
-		allowed_fields = [f["fieldname"] for f in FieldMappingService.get_allowed_fields()]
+		allowed_fields = [f["fieldname"] for f in FieldMappingService.get_allowed_fields(target_doctype)]
 		return fieldname in allowed_fields

@@ -4,6 +4,9 @@
 			<button class="btn btn-primary btn-sm" id="btn-upload-pdf">
 				<i class="fa fa-upload"></i> PDF
 			</button>
+			<button class="btn btn-default btn-sm" id="btn-pdf-text">
+				<i class="fa fa-align-left"></i> PDF Text
+			</button>
 			<button class="btn btn-default btn-sm" id="btn-save">
 				<i class="fa fa-save"></i> Save
 			</button>
@@ -25,6 +28,12 @@
 			<button class="btn btn-danger btn-sm" id="btn-delete">Delete</button>
 		</div>
 		<div class="toolbar-section">
+			<button class="btn btn-default btn-sm" id="btn-fullscreen">
+				<i class="fa fa-expand"></i> Fullscreen
+			</button>
+			<button class="btn btn-default btn-sm" id="btn-v-ruler">V Ruler</button>
+			<button class="btn btn-default btn-sm" id="btn-h-ruler">H Ruler</button>
+			<button class="btn btn-default btn-sm" id="btn-clear-rulers">Clear Rulers</button>
 			<button class="btn btn-default btn-sm" id="btn-ocr">
 				<i class="fa fa-magic"></i> Run OCR
 			</button>
@@ -43,18 +52,31 @@
 			<div id="gpf-canvas-container"></div>
 		</div>
 		<div class="gpf-property-panel">
-			<div class="panel-header">Source Document</div>
-			<div class="gpf-source-doc-panel">
-				<div id="gpf-source-doc-control"></div>
-				<div class="text-muted gpf-source-doc-help">Select a Dunning Letter to preview real field values.</div>
+			<div class="panel-header" data-collapse-target="#gpf-source-doc-panel">
+				<span>Source Document</span>
+				<i class="fa fa-chevron-up"></i>
 			</div>
-			<div class="panel-header">Properties</div>
+			<div id="gpf-source-doc-panel" class="gpf-source-doc-panel">
+				<div id="gpf-target-doctype-control"></div>
+				<div id="gpf-source-doc-control"></div>
+				<div class="text-muted gpf-source-doc-help"></div>
+			</div>
+			<div class="panel-header" data-collapse-target="#gpf-properties-content">
+				<span>Properties</span>
+				<i class="fa fa-chevron-up"></i>
+			</div>
 			<div id="gpf-properties-content">
 				<div class="text-muted text-center gpf-empty-state">Select a block to edit.</div>
 			</div>
-			<div class="panel-header">Fields</div>
+			<div class="panel-header" data-collapse-target="#gpf-field-list">
+				<span>Fields</span>
+				<i class="fa fa-chevron-up"></i>
+			</div>
 			<div id="gpf-field-list" class="gpf-field-list"></div>
-			<div class="panel-header">OCR Results</div>
+			<div class="panel-header" data-collapse-target="#gpf-ocr-list">
+				<span>OCR Results</span>
+				<i class="fa fa-chevron-up"></i>
+			</div>
 			<div id="gpf-ocr-list" class="gpf-ocr-list"></div>
 		</div>
 	</div>

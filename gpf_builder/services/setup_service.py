@@ -12,7 +12,7 @@ class SetupService:
 		Retrieve the single active MVP setup record.
 		Create it idempotently if the migration patch has not run yet.
 		"""
-		setup_name = frappe.db.get_value("GPF Print Format Setup", {"target_doctype": TARGET_DOCTYPE}, "name")
+		setup_name = frappe.db.get_value("GPF Print Format Setup", {}, "name", order_by="creation asc")
 		if not setup_name:
 			setup_doc = frappe.new_doc("GPF Print Format Setup")
 			setup_doc.target_doctype = TARGET_DOCTYPE
@@ -22,9 +22,8 @@ class SetupService:
 			return setup_doc
 		
 		setup_doc = frappe.get_doc("GPF Print Format Setup", setup_name)
-		
-		# Hard restriction check
-		if setup_doc.target_doctype != TARGET_DOCTYPE:
+
+		if not setup_doc.target_doctype or not frappe.db.exists("DocType", setup_doc.target_doctype):
 			frappe.throw(
 				frappe._("Invalid target DocType: {0}").format(setup_doc.target_doctype),
 				frappe.ValidationError,

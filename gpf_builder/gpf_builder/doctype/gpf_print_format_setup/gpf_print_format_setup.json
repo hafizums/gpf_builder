@@ -38,9 +38,9 @@
   {
    "default": "Dunning Letter",
    "fieldname": "target_doctype",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Target DocType",
-   "read_only": 1
+   "options": "DocType"
   },
   {
    "fieldname": "pdf_reference_file",

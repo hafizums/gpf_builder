@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import frappe
 import json
+from frappe.utils import sanitize_html
 from gpf_builder.domain.constants import (
 	BLOCK_TYPE_BRANDING,
 	BLOCK_TYPE_DYNAMIC_FIELD,
@@ -20,6 +21,10 @@ class LayoutService:
 		"color", "background-color", "opacity",
 		"line-height", "letter-spacing", "padding"
 	]
+
+	@staticmethod
+	def sanitize_static_html(value):
+		return sanitize_html(value or "")
 
 	@staticmethod
 	def validate_style_json(style_json):
@@ -48,7 +53,7 @@ class LayoutService:
 		return json.dumps(sanitized)
 
 	@staticmethod
-	def validate_block_data(block_data):
+	def validate_block_data(block_data, target_doctype=None):
 		"""
 		Validates block coordinates (0-100) and style JSON.
 		"""
@@ -81,11 +86,12 @@ class LayoutService:
 
 		# 3. Block Type Specifics
 		if block_type == BLOCK_TYPE_STATIC_TEXT:
-			text = block_data.get("static_text")
+			text = LayoutService.sanitize_static_html(block_data.get("static_text"))
+			block_data["static_text"] = text
 			if not text or not text.strip():
 				frappe.throw(frappe._("Static Text block cannot be empty or whitespace only."), frappe.ValidationError)
 
-		if block_type == BLOCK_TYPE_DYNAMIC_FIELD and not FieldMappingService.validate_fieldname(block_data.get("fieldname")):
+		if block_type == BLOCK_TYPE_DYNAMIC_FIELD and not FieldMappingService.validate_fieldname(block_data.get("fieldname"), target_doctype):
 			frappe.throw(frappe._("Dynamic Field block uses an invalid fieldname."), frappe.ValidationError)
 
 		if block_type == BLOCK_TYPE_OCR_TEXT and block_data.get("ocr_result"):
@@ -96,11 +102,18 @@ class LayoutService:
 			BrandingService.validate_image(block_data.get("file_reference"))
 
 	@staticmethod
-	def create_block(setup_name, block_data):
+	def normalize_file_reference(block_data):
+		if block_data.get("block_type") in [BLOCK_TYPE_IMAGE, BLOCK_TYPE_BRANDING] and block_data.get("file_reference"):
+			block_data["file_reference"] = BrandingService.get_file_doc(block_data.get("file_reference")).name
+		return block_data
+
+	@staticmethod
+	def create_block(setup_name, block_data, target_doctype=None):
 		"""
 		Creates a single layout block.
 		"""
-		LayoutService.validate_block_data(block_data)
+		block_data = LayoutService.normalize_file_reference(block_data)
+		LayoutService.validate_block_data(block_data, target_doctype)
 		
 		block = frappe.get_doc({
 			"doctype": "GPF Layout Block",
@@ -121,11 +134,12 @@ class LayoutService:
 		return block.name
 
 	@staticmethod
-	def update_block(block_name, block_data):
+	def update_block(block_name, block_data, target_doctype=None):
 		"""
 		Updates an existing layout block.
 		"""
-		LayoutService.validate_block_data(block_data)
+		block_data = LayoutService.normalize_file_reference(block_data)
+		LayoutService.validate_block_data(block_data, target_doctype)
 		
 		block = frappe.get_doc("GPF Layout Block", block_name)
 		block.update({
@@ -167,7 +181,7 @@ class LayoutService:
 		return new_block.name
 
 	@staticmethod
-	def save_layout_blocks(setup_name, blocks):
+	def save_layout_blocks(setup_name, blocks, target_doctype=None):
 		"""
 		Saves a list of layout blocks for a given setup.
 		Overwrites existing blocks for that setup (Atomic Save).
@@ -178,7 +192,8 @@ class LayoutService:
 		# 2. Insert new blocks
 		created_blocks = []
 		for block_data in blocks:
-			LayoutService.validate_block_data(block_data)
+			block_data = LayoutService.normalize_file_reference(block_data)
+			LayoutService.validate_block_data(block_data, target_doctype)
 			
 			block = frappe.get_doc({
 				"doctype": "GPF Layout Block",

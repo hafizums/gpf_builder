@@ -12,7 +12,7 @@ The builder lets an Administrator upload a single-page PDF reference, place text
 4. [Open the Builder](#open-the-builder)
 5. [Builder Screen Overview](#builder-screen-overview)
 6. [Complete Workflow](#complete-workflow)
-7. [Select a Source Dunning Letter](#select-a-source-dunning-letter)
+7. [Select a Target DocType and Source Document](#select-a-target-doctype-and-source-document)
 8. [Upload the PDF Reference](#upload-the-pdf-reference)
 9. [Add Layout Blocks](#add-layout-blocks)
 10. [Edit Block Properties](#edit-block-properties)
@@ -27,9 +27,10 @@ The builder lets an Administrator upload a single-page PDF reference, place text
 19. [Finalize the Setup](#finalize-the-setup)
 20. [Return to Editing](#return-to-editing)
 21. [Validation Rules](#validation-rules)
-22. [Recommended Working Practices](#recommended-working-practices)
-23. [Troubleshooting](#troubleshooting)
-24. [Limitations](#limitations)
+22. [Rate Limit Settings](#rate-limit-settings)
+23. [Recommended Working Practices](#recommended-working-practices)
+24. [Troubleshooting](#troubleshooting)
+25. [Limitations](#limitations)
 
 ## Purpose
 
@@ -97,17 +98,22 @@ The toolbar contains the main actions:
 | Button | Purpose |
 | --- | --- |
 | `PDF` | Upload and link the PDF reference. |
+| `PDF Text` | Extract selectable text from the uploaded PDF for copy/paste. |
 | `Save` | Save the current layout blocks. |
 | `Preview` | Open an HTML preview of the saved layout. |
 | `Output` | Generate copy-ready Print Format HTML. |
 | `Text` | Add a static text block. |
-| `Field` | Add a dynamic Dunning Letter field block. |
+| `Field` | Add a dynamic source document field block. |
 | `OCR Text` | Add an OCR text block. |
 | `Image` | Add an image block. |
 | `Branding` | Add a branding block. |
 | `Duplicate` | Duplicate the selected block. |
-| `Reset` | Clear all layout blocks after confirmation. |
+| `Reset` | Clear the PDF reference, layout blocks, OCR results, and source document selection after confirmation. |
 | `Delete` | Delete the selected block. |
+| `Fullscreen` | Expand the builder over the full browser viewport. |
+| `V Ruler` | Add a draggable vertical ruler for left/right alignment. |
+| `H Ruler` | Add a draggable horizontal ruler for top/bottom alignment. |
+| `Clear Rulers` | Remove all editor ruler guides. |
 | `Run OCR` | Run OCR against the uploaded PDF reference. |
 | `Finalize` | Save, validate, and lock the layout. |
 | `Return` | Return a finalized setup to editing mode. Only visible after finalization. |
@@ -141,18 +147,22 @@ The property panel shows editable properties for the selected block:
 - W %
 - H %
 
-It also shows the allowed Dunning Letter fields that can be used in dynamic field blocks.
+It also shows the allowed target DocType fields that can be used in dynamic field blocks.
 
 The `OCR Results` section shows detected OCR text from the uploaded PDF. Each OCR result can be viewed, confirmed, or applied to an OCR Text block.
 
-The `Source Document` section lets you select which Dunning Letter record should provide real values for dynamic fields.
+The `Source Document` section lets you select the target DocType and the source record that should provide real values for dynamic fields.
+
+Use `Fullscreen` when you need more room for precise alignment. Click it again, or press `Esc`, to return to the normal Desk view.
+
+Use `V Ruler` and `H Ruler` to add draggable alignment guides. Vertical rulers show left and right percentage positions. Horizontal rulers show top and bottom percentage positions. Rulers are editor-only helpers and are not saved into the generated print format.
 
 ## Complete Workflow
 
 Use this normal workflow:
 
 1. Open `/app/gpf-builder`.
-2. Select the source Dunning Letter document.
+2. Select the target DocType and source document.
 3. Upload the PDF reference.
 4. Add blocks for text, fields, images, and OCR text.
 5. Move and resize blocks on the canvas.
@@ -165,17 +175,22 @@ Use this normal workflow:
 12. Generate the output.
 13. Copy the generated HTML into the intended Frappe Print Format workflow.
 
-## Select a Source Dunning Letter
+## Select a Target DocType and Source Document
 
-Use the `Source Document` field in the right panel to choose which Dunning Letter record the builder should use.
+Use the `Source Document` section in the right panel to choose:
 
-After selecting a document:
+- `Target DocType`: the DocType this print layout is being built for.
+- Source document: the specific record used to preview real dynamic field values.
 
-- Dynamic Field blocks on the canvas show values from that Dunning Letter.
-- `Preview` renders dynamic fields using that Dunning Letter.
-- `Output` generates HTML using that Dunning Letter when run from the builder.
+After selecting a target DocType and source document:
+
+- Dynamic Field blocks on the canvas show values from the selected source document.
+- `Preview` renders dynamic fields using the selected source document.
+- `Output` generates HTML using the selected source document when run from the builder.
 
 If no source document is selected, preview uses redacted sample values and generated output may show blank dynamic fields.
+
+Changing the target DocType clears the current PDF reference, layout blocks, and OCR results because existing blocks may no longer match the new DocType fields.
 
 ## Upload the PDF Reference
 
@@ -204,6 +219,14 @@ The uploaded PDF must meet these rules:
 | Readability | Not corrupted or password-protected |
 
 If the PDF does not render, verify that the file is valid and stored privately.
+
+### Copy Text from the PDF
+
+After uploading a PDF reference, click `PDF Text` to open the extracted PDF text in a selectable dialog.
+
+Use this when you need to copy wording from the reference PDF into a Static Text block.
+
+If the dialog says no selectable text was found, the PDF is probably scanned image content. Use OCR Text blocks for scanned regions instead.
 
 ## Add Layout Blocks
 
@@ -470,19 +493,21 @@ If the preview looks wrong:
 
 ## Reset the Layout
 
-Use `Reset` when you need to remove every block from the current layout and start placement again.
+Use `Reset` when you need to return the builder to a clean state.
 
 1. Click `Reset`.
 2. Confirm the prompt:
 
    ```text
-   Clear all layout blocks?
+   Reset the builder?
    ```
 
-3. The builder removes all blocks from the canvas.
-4. The empty layout is saved immediately.
+3. The builder clears the PDF reference.
+4. The builder removes all layout blocks from the canvas and database.
+5. The builder removes OCR results for the active setup.
+6. The builder clears the selected source document.
 
-Reset does not remove the PDF reference. It only clears layout blocks.
+Reset does not delete uploaded File records. It only unlinks the PDF reference from the builder setup.
 
 ## Generate Print Format Output
 
@@ -578,6 +603,30 @@ Finalization requires:
 - Blocks do not overlap.
 
 If two blocks overlap, finalization is blocked.
+
+## Rate Limit Settings
+
+Administrators can configure builder rate limits in:
+
+```text
+GPF Rate Limit Settings
+```
+
+The settings are applied per user and per action.
+
+| Setting | Default | Applies To |
+| --- | ---: | --- |
+| `Enable Rate Limiting` | Enabled | Turns all builder rate limiting on or off. |
+| `Window Seconds` | `3600` | Length of the rate-limit window. |
+| `Upload PDF Limit` | `5` | PDF reference uploads. |
+| `Run OCR Limit` | `3` | OCR runs. |
+| `Generate Preview Limit` | `30` | Preview generation. |
+| `Save Layout Limit` | `60` | Layout saves. |
+| `Finalize Limit` | `10` | Finalization attempts. |
+| `Generate Output Limit` | `30` | Output generation. |
+| `Return to Editing Limit` | `5` | Returning a finalized setup to editing. |
+
+Set a limit to `0` to disable limiting for that specific action while leaving other action limits enabled.
 
 ## Recommended Working Practices
 

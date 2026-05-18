@@ -1,0 +1,129 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-13 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "general_section",
+  "enabled",
+  "window_seconds",
+  "limits_section",
+  "upload_pdf_limit",
+  "run_ocr_limit",
+  "generate_preview_limit",
+  "save_layout_limit",
+  "finalize_limit",
+  "generate_output_limit",
+  "return_to_editing_limit"
+ ],
+ "fields": [
+  {
+   "fieldname": "general_section",
+   "fieldtype": "Section Break",
+   "label": "General"
+  },
+  {
+   "default": "1",
+   "description": "Disable only for controlled administrator troubleshooting.",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enable Rate Limiting"
+  },
+  {
+   "default": "3600",
+   "description": "Rate limit window in seconds. Default is 3600 seconds, or 1 hour.",
+   "fieldname": "window_seconds",
+   "fieldtype": "Int",
+   "label": "Window Seconds",
+   "reqd": 1
+  },
+  {
+   "fieldname": "limits_section",
+   "fieldtype": "Section Break",
+   "label": "Limits"
+  },
+  {
+   "default": "5",
+   "description": "Maximum PDF reference uploads per user per window.",
+   "fieldname": "upload_pdf_limit",
+   "fieldtype": "Int",
+   "label": "Upload PDF Limit",
+   "reqd": 1
+  },
+  {
+   "default": "3",
+   "description": "Maximum OCR runs per user per window.",
+   "fieldname": "run_ocr_limit",
+   "fieldtype": "Int",
+   "label": "Run OCR Limit",
+   "reqd": 1
+  },
+  {
+   "default": "30",
+   "description": "Maximum preview generations per user per window.",
+   "fieldname": "generate_preview_limit",
+   "fieldtype": "Int",
+   "label": "Generate Preview Limit",
+   "reqd": 1
+  },
+  {
+   "default": "60",
+   "description": "Maximum layout saves per user per window.",
+   "fieldname": "save_layout_limit",
+   "fieldtype": "Int",
+   "label": "Save Layout Limit",
+   "reqd": 1
+  },
+  {
+   "default": "10",
+   "description": "Maximum finalization attempts per user per window.",
+   "fieldname": "finalize_limit",
+   "fieldtype": "Int",
+   "label": "Finalize Limit",
+   "reqd": 1
+  },
+  {
+   "default": "30",
+   "description": "Maximum output generations per user per window.",
+   "fieldname": "generate_output_limit",
+   "fieldtype": "Int",
+   "label": "Generate Output Limit",
+   "reqd": 1
+  },
+  {
+   "default": "5",
+   "description": "Maximum return-to-editing actions per user per window.",
+   "fieldname": "return_to_editing_limit",
+   "fieldtype": "Int",
+   "label": "Return to Editing Limit",
+   "reqd": 1
+  }
+ ],
+ "index_pages": [],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-05-13 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "GPF Builder",
+ "name": "GPF Rate Limit Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

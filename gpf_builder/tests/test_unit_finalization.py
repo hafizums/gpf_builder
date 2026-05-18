@@ -39,6 +39,40 @@ class TestFinalization(unittest.TestCase):
 		# Verify snapshot created
 		self.assertTrue(frappe.db.exists("GPF Version History", {"setup": self.setup.name, "event_type": "Finalize"}))
 
+	def test_finalize_allows_punctuation_static_text_overlap(self):
+		"""
+		Punctuation labels such as ':' may overlap a field block slightly in
+		real print layouts and should not block finalization.
+		"""
+		LayoutService.create_block(self.setup.name, {
+			"block_type": "Static Text",
+			"static_text": ":",
+			"x": 0, "y": 0, "width": 5, "height": 5
+		})
+		LayoutService.create_block(self.setup.name, {
+			"block_type": "Dynamic Field",
+			"fieldname": "customer",
+			"x": 2, "y": 0, "width": 10, "height": 5
+		})
+
+		FinalizationService.finalize_setup(self.setup.name)
+
+		status = frappe.db.get_value("GPF Print Format Setup", self.setup.name, "status")
+		self.assertEqual(status, SETUP_STATUS_FINALIZED)
+
+	def test_finalize_allows_media_overlap(self):
+		"""
+		Image and Branding blocks may intentionally overlap other final print content.
+		"""
+		self.assertTrue(FinalizationService.is_allowed_overlap(
+			frappe._dict({"block_type": "Image"}),
+			frappe._dict({"block_type": "Static Text", "static_text": "Header"})
+		))
+		self.assertTrue(FinalizationService.is_allowed_overlap(
+			frappe._dict({"block_type": "Dynamic Field", "fieldname": "customer"}),
+			frappe._dict({"block_type": "Branding"})
+		))
+
 	def test_return_to_editing(self):
 		"""
 		Proving transition back to editing.

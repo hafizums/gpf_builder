@@ -4,6 +4,7 @@ import json
 from frappe.utils import escape_html
 from gpf_builder.services.layout_service import LayoutService
 from gpf_builder.services.setup_service import SetupService
+from gpf_builder.services.preview_service import PreviewService
 from gpf_builder.domain.constants import (
 	BLOCK_TYPE_STATIC_TEXT,
 	BLOCK_TYPE_DYNAMIC_FIELD,
@@ -27,9 +28,9 @@ class OutputService:
 		
 		blocks = LayoutService.get_layout(setup.name)
 		
-		# High-resolution A4 container (using normalized percentages)
 		html = [
-			'<div class="gpf-output-container" style="position: relative; width: 100%; height: 0; padding-bottom: 141.42%; background: white;">'
+			PreviewService.get_shared_print_css(),
+			'<div class="gpf-output-container gpf-print-root">'
 		]
 		
 		for block in blocks:
@@ -42,16 +43,26 @@ class OutputService:
 				"top": "{0}%".format(block.y),
 				"width": "{0}%".format(block.width),
 				"height": "{0}%".format(block.height),
-				"z-index": block.z_index
+				"z-index": block.z_index,
+				"overflow": "hidden",
+				"font-size": "12px",
+				"font-family": "Arial",
+				"line-height": "1.2",
+				"color": "#1f2937",
+				"text-align": "left"
 			}
 			base_styles.update(style_dict)
 			
-			style_str = "; ".join(["{0}: {1}".format(k, v) for k, v in base_styles.items()])
+			style_str = OutputService.format_inline_style(base_styles)
 			
-			html.append('<div class="gpf-block" style="{0}">{1}</div>'.format(style_str, content))
+			html.append('<div class="gpf-block gpf-print-block" style="{0}">{1}</div>'.format(style_str, content))
 			
 		html.append('</div>')
 		return "".join(html)
+
+	@staticmethod
+	def format_inline_style(styles):
+		return "; ".join(["{0}: {1}".format(k, v) for k, v in styles.items()])
 
 	@staticmethod
 	def _render_production_content(block, doc):
@@ -59,12 +70,14 @@ class OutputService:
 		Renders content using real production data from the document.
 		"""
 		if block.block_type == BLOCK_TYPE_STATIC_TEXT:
-			return escape_html(block.static_text or "")
+			return PreviewService.render_static_html(block.static_text)
 			
 		elif block.block_type == BLOCK_TYPE_DYNAMIC_FIELD:
-			# Get formatted value from Frappe if possible
-			val = doc.get(block.fieldname)
-			return "<span>{0}</span>".format(escape_html(frappe.utils.cstr(val) if val is not None else ""))
+			try:
+				val = doc.get_formatted(block.fieldname)
+			except Exception:
+				val = frappe.utils.cstr(doc.get(block.fieldname) if hasattr(doc, "get") else "")
+			return "<span>{0}</span>".format(escape_html(val if val is not None else ""))
 			
 		elif block.block_type == BLOCK_TYPE_OCR_TEXT:
 			# Only show if result is confirmed
@@ -78,6 +91,6 @@ class OutputService:
 				file_url = frappe.db.get_value("File", block.file_reference, "file_url")
 				if not file_url:
 					file_url = block.file_reference
-				return '<img src="{0}" style="width:100%; height:100%; object-fit:contain;" />'.format(escape_html(file_url))
+				return '<img src="{0}" />'.format(escape_html(file_url))
 			
 		return ""

@@ -10,5 +10,5 @@ class GPFPrintFormatSetup(Document):
 		self.validate_target_doctype()
 
 	def validate_target_doctype(self):
-		if self.target_doctype != "Dunning Letter":
-			frappe.throw(frappe._("Target DocType must be 'Dunning Letter'"))
+		if not self.target_doctype or not frappe.db.exists("DocType", self.target_doctype):
+			frappe.throw(frappe._("Target DocType is required and must exist."))

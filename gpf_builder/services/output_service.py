@@ -52,13 +52,15 @@ class OutputService:
 				"text-align": "left"
 			}
 			base_styles.update(style_dict)
+			if base_styles.get("text-align") == "justify":
+				base_styles.pop("text-align-last", None)
 			
 			style_str = OutputService.format_inline_style(base_styles)
 			
-			html.append('<div class="gpf-block gpf-print-block" style="{0}">{1}</div>'.format(style_str, content))
+			html.append('\t<div class="gpf-block gpf-print-block" style="{0}">{1}</div>'.format(style_str, content))
 			
 		html.append('</div>')
-		return "".join(html)
+		return "\n".join(html)
 
 	@staticmethod
 	def format_inline_style(styles):

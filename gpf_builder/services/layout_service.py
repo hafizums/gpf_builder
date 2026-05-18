@@ -17,7 +17,7 @@ class LayoutService:
 	# Prevents CSS injection and ensures UI consistency
 	ALLOWED_STYLE_PROPERTIES = [
 		"font-size", "font-weight", "font-family", "font-style",
-		"text-align", "text-decoration", "text-transform",
+		"text-align", "text-align-last", "text-decoration", "text-transform",
 		"color", "background-color", "opacity",
 		"line-height", "letter-spacing", "padding"
 	]

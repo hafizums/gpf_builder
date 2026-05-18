@@ -212,8 +212,8 @@ body.gpf-fullscreen-active {
 .gpf-preview-dialog-page {
 	max-width: 794px;
 	margin: 0 auto;
-	background: #f3f4f6;
-	padding: 16px;
+	background: transparent;
+	padding: 0;
 }
 
 .gpf-preview-overlay {

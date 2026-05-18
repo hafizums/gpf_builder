@@ -53,6 +53,8 @@ class PreviewService:
 				"text-align": "left"
 			}
 			base_styles.update(style_dict)
+			if base_styles.get("text-align") == "justify":
+				base_styles.pop("text-align-last", None)
 			
 			style_str = "; ".join(["{0}: {1}".format(k, v) for k, v in base_styles.items()])
 			
@@ -89,6 +91,28 @@ class PreviewService:
 			"    max-width: none !important;\n"
 			"  }\n"
 			"\n"
+			"  .print-format,\n"
+			"  .print-format.print-format-preview {\n"
+			"    display: block !important;\n"
+			"    flex-direction: initial !important;\n"
+			"    flex: none !important;\n"
+			"    min-height: 297mm !important;\n"
+			"    height: 297mm !important;\n"
+			"    border-radius: 0 !important;\n"
+			"    box-shadow: none !important;\n"
+			"    overflow: hidden !important;\n"
+			"    background: white !important;\n"
+			"  }\n"
+			"\n"
+			"  .print-format-gutter {\n"
+			"    background: transparent !important;\n"
+			"  }\n"
+			"\n"
+			"  .print-format > .gpf-output-container,\n"
+			"  .print-format > .gpf-preview-root {\n"
+			"    flex: none !important;\n"
+			"  }\n"
+			"\n"
 			"  .gpf-print-root {\n"
 			"    position: relative;\n"
 			"    background: white;\n"
@@ -121,12 +145,15 @@ class PreviewService:
 			"    padding: 0;\n"
 			"    white-space: pre-wrap;\n"
 			"    overflow-wrap: break-word;\n"
+			"    text-align: inherit;\n"
+			"    text-align-last: inherit;\n"
 			"  }\n"
 			"\n"
 			"  .gpf-print-block img {\n"
+			"    display: block;\n"
 			"    width: 100%;\n"
 			"    height: 100%;\n"
-			"    object-fit: contain;\n"
+			"    object-fit: fill;\n"
 			"  }\n"
 			"</style>"
 		)

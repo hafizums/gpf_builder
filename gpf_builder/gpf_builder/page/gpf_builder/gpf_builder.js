@@ -624,7 +624,8 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 			const label = node.findOne(".gpf-block-label");
 			const type = node.getAttr("block_type");
 			const is_media = type === "Image" || type === "Branding";
-			const is_static_html = type === "Static Text" && this.has_html_tags(node.getAttr("static_text"));
+			const styles = this.get_style_attrs(node);
+			const is_static_text = type === "Static Text";
 			if (box) {
 				box.width(node.width());
 				box.height(node.height());
@@ -642,7 +643,6 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 				html_image.visible(false);
 			}
 			if (label) {
-				const styles = this.get_style_attrs(node);
 				const font_weight = styles["font-weight"] || "normal";
 				const font_style = styles["font-style"] || "normal";
 				const konva_font_style = [
@@ -667,7 +667,7 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 			}
 			if (is_media) {
 				this.sync_block_image_preview(node);
-			} else if (is_static_html) {
+			} else if (is_static_text) {
 				this.sync_block_html_preview(node);
 			}
 			this.layer.batchDraw();
@@ -729,14 +729,14 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 
 			const width = Math.max(1, Math.round(node.width()));
 			const height = Math.max(1, Math.round(node.height()));
-			const raw_html = String(node.getAttr("static_text") || "");
-			const safe_html = this.sanitize_static_html_for_preview(raw_html);
+			const safe_html = this.render_static_html_for_builder(node.getAttr("static_text"));
 			const styles = this.get_style_attrs(node);
 			const font_size = this.css_size_to_number(styles["font-size"], 12);
 			const line_height = this.css_number(styles["line-height"], 1.2);
 			const font_family = styles["font-family"] || "Arial";
 			const color = styles.color || "#1f2937";
 			const text_align = styles["text-align"] || "left";
+			const text_align_last = text_align === "justify" ? "auto" : (styles["text-align-last"] || "auto");
 			const font_weight = styles["font-weight"] || "normal";
 			const font_style = styles["font-style"] || "normal";
 			const cache_key = JSON.stringify({
@@ -748,6 +748,7 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 				font_family,
 				color,
 				text_align,
+				text_align_last,
 				font_weight,
 				font_style
 			});
@@ -786,6 +787,7 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 				font_family,
 				color,
 				text_align,
+				text_align_last,
 				font_weight,
 				font_style
 			});
@@ -798,6 +800,7 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 				`font-family:${this.escape_html(options.font_family)}`,
 				`color:${this.escape_html(options.color)}`,
 				`text-align:${this.escape_html(options.text_align)}`,
+				`text-align-last:${this.escape_html(options.text_align_last)}`,
 				`font-weight:${this.escape_html(options.font_weight)}`,
 				`font-style:${this.escape_html(options.font_style)}`,
 				"margin:0",
@@ -807,10 +810,21 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 				"width:100%",
 				"height:100%"
 			].join(";");
+			const span_style = [
+				"display:block",
+				"width:100%",
+				"margin:0",
+				"padding:0",
+				"white-space:pre-wrap",
+				"overflow-wrap:break-word",
+				"text-align:inherit",
+				"text-align-last:inherit"
+			].join(";");
 			const svg = `
 				<svg xmlns="http://www.w3.org/2000/svg" width="${options.width}" height="${options.height}">
 					<foreignObject width="100%" height="100%">
 						<div xmlns="http://www.w3.org/1999/xhtml" style="${body_style}">
+							<style>span.gpf-builder-plain-text{${span_style}}</style>
 							${options.html}
 						</div>
 					</foreignObject>
@@ -862,6 +876,14 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 					<textarea class="form-control input-sm property-input" data-prop="static_text" rows="6">${this.escape_html(attrs.static_text || "")}</textarea>
 				</div>
 				<div class="property-group">
+					<div class="property-label">Text Alignment</div>
+					<select class="form-control input-sm property-input" data-prop="style_text_align">
+						${["left", "center", "right", "justify"].map((align) =>
+							`<option value="${align}" ${(styles["text-align"] || "left") === align ? "selected" : ""}>${align}</option>`
+						).join("")}
+					</select>
+				</div>
+				<div class="property-group">
 					<div class="property-label">Fieldname</div>
 					<input class="form-control input-sm property-input" data-prop="fieldname" value="${this.escape_html(attrs.fieldname || "")}">
 				</div>
@@ -896,7 +918,7 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 						<div class="col-xs-6">
 							<div class="property-label">Align</div>
 							<select class="form-control input-sm property-input" data-prop="style_text_align">
-								${["left", "center", "right"].map((align) =>
+								${["left", "center", "right", "justify"].map((align) =>
 									`<option value="${align}" ${(styles["text-align"] || "left") === align ? "selected" : ""}>${align}</option>`
 								).join("")}
 							</select>
@@ -974,6 +996,9 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 				styles[css_prop] = `${size}px`;
 			} else if (prop === "style_line_height") {
 				styles[css_prop] = this.css_number(value, 1.2);
+			} else if (prop === "style_text_align") {
+				styles[css_prop] = value;
+				delete styles["text-align-last"];
 			} else {
 				styles[css_prop] = value;
 			}
@@ -1164,6 +1189,27 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 			this.$wrapper.append(overlay);
 		}
 
+		copy_to_clipboard(text, success_message) {
+			const value = text || "";
+			if (navigator.clipboard && window.isSecureContext) {
+				return navigator.clipboard.writeText(value).then(() => {
+					frappe.show_alert({ message: success_message || "Copied.", indicator: "green" });
+				});
+			}
+
+			const textarea = document.createElement("textarea");
+			textarea.value = value;
+			textarea.setAttribute("readonly", "");
+			textarea.style.position = "fixed";
+			textarea.style.left = "-9999px";
+			document.body.appendChild(textarea);
+			textarea.select();
+			document.execCommand("copy");
+			document.body.removeChild(textarea);
+			frappe.show_alert({ message: success_message || "Copied.", indicator: "green" });
+			return Promise.resolve();
+		}
+
 		async show_output() {
 			const output = await this.call("gpf_builder.api.api.generate_output", {
 				docname: this.source_docname || null
@@ -1171,10 +1217,15 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 			const dialog = new frappe.ui.Dialog({
 				title: "Copy-ready Print Format HTML",
 				size: "extra-large",
-				fields: [{ fieldtype: "Code", fieldname: "html", options: "HTML", label: "HTML", read_only: 1 }]
+				fields: [{ fieldtype: "Code", fieldname: "html", options: "HTML", label: "HTML", read_only: 1 }],
+				primary_action_label: "Copy HTML",
+				primary_action: () => {
+					this.copy_to_clipboard(output || "", "Print Format HTML copied.");
+				}
 			});
 			dialog.show();
 			dialog.set_value("html", output || "");
+			dialog.get_primary_btn().removeClass("btn-primary").addClass("btn-success");
 		}
 
 		async finalize() {
@@ -1498,6 +1549,15 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 			return Array.from(container.childNodes)
 				.map((node) => serializer.serializeToString(node))
 				.join("");
+		}
+
+		render_static_html_for_builder(value) {
+			const raw = String(value || "");
+			const safe_html = this.sanitize_static_html_for_preview(raw);
+			if (this.has_html_tags(safe_html)) {
+				return safe_html;
+			}
+			return `<span class="gpf-builder-plain-text">${this.escape_html(raw)}</span>`;
 		}
 	}
 };

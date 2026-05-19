@@ -1767,7 +1767,7 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 		render_static_html_for_builder(value) {
 			const raw = String(value || "");
 			const safe_html = this.sanitize_static_html_for_preview(raw);
-			if (this.has_html_tags(safe_html) || this.has_html_entities(safe_html)) {
+			if (this.has_html_tags(safe_html) || this.has_html_entities(raw) || this.has_html_entities(safe_html)) {
 				return safe_html;
 			}
 			return `<span class="gpf-builder-plain-text">${this.escape_html(raw)}</span>`;

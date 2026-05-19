@@ -142,6 +142,72 @@ body.gpf-fullscreen-active {
 	height: 30px;
 }
 
+.gpf-table-drawer .btn i {
+	margin-right: 4px;
+}
+
+.gpf-table-option {
+	display: block;
+	margin: 8px 0;
+	font-size: 11px;
+	font-weight: normal;
+	color: #334155;
+}
+
+.gpf-table-help {
+	margin-top: 6px;
+	font-size: 11px;
+	line-height: 1.35;
+}
+
+.gpf-empty-template-list {
+	padding: 12px;
+	text-align: center;
+}
+
+.gpf-template-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.gpf-template-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 12px;
+	border: 1px solid #dfe3e8;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.gpf-template-meta {
+	min-width: 0;
+}
+
+.gpf-template-title {
+	font-size: 13px;
+	font-weight: 600;
+	color: #1f2937;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.gpf-template-subtitle {
+	margin-top: 2px;
+	font-size: 11px;
+	color: #64748b;
+}
+
+.gpf-template-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-shrink: 0;
+}
+
 .gpf-field-item {
 	font-size: 11px;
 }

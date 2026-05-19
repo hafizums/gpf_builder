@@ -84,5 +84,15 @@ class TestOutputService(unittest.TestCase):
 		self.assertIn("width: 210mm", html)
 		self.assertIn("height: 297mm", html)
 
+	def test_output_table_css_overrides_frappe_print_styles(self):
+		"""
+		Proving GPF tables keep builder styling in Frappe print output.
+		"""
+		html = OutputService.generate_final_html(self.doc)
+		self.assertIn("border-collapse: collapse !important", html)
+		self.assertIn("padding: 2px 6px !important", html)
+		self.assertIn("background-color: #d9d9d9 !important", html)
+		self.assertIn("color: inherit !important", html)
+
 	def tearDown(self):
 		frappe.db.rollback()

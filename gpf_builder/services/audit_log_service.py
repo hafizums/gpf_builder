@@ -10,8 +10,11 @@ class AuditLogService:
 		Records a security or workflow event in the GPF Audit Event log.
 		Ensures that IP address and User Agent are hashed before storage.
 		"""
-		ip_address = frappe.local.request_ip if hasattr(frappe.local, "request_ip") else "unknown"
-		user_agent = frappe.get_request_header("User-Agent") or "unknown"
+		ip_address = (frappe.local.request_ip if hasattr(frappe.local, "request_ip") else None) or "unknown"
+		try:
+			user_agent = frappe.get_request_header("User-Agent") or "unknown"
+		except RuntimeError:
+			user_agent = "unknown"
 		
 		ip_hash = hashlib.sha256(ip_address.encode("utf-8")).hexdigest()
 		ua_hash = hashlib.sha256(user_agent.encode("utf-8")).hexdigest()

@@ -11,6 +11,7 @@ from gpf_builder.services.preview_service import PreviewService
 from gpf_builder.services.finalization_service import FinalizationService
 from gpf_builder.services.output_service import OutputService
 from gpf_builder.services.setup_service import SetupService
+from gpf_builder.services.template_service import TemplateService
 from gpf_builder.services.rate_limit_service import RateLimitService
 from gpf_builder.services.audit_log_service import AuditLogService
 from gpf_builder.services.validation_service import ValidationService
@@ -214,6 +215,79 @@ def save_layout(blocks_json):
 	
 	AuditLogService.log_event("SAVE_LAYOUT", "Saved {0} blocks for setup {1}".format(len(blocks), setup.name))
 	
+	return {"status": "success"}
+
+def validate_layout_block_scope(blocks, setup_name):
+	for b in blocks:
+		if b.get("ocr_result"):
+			ValidationService.validate_setup_scope("GPF OCR Result", b["ocr_result"], setup_name)
+		if b.get("file_reference"):
+			if b.get("block_type") in [BLOCK_TYPE_IMAGE, BLOCK_TYPE_BRANDING]:
+				BrandingService.validate_image(b["file_reference"])
+			else:
+				ValidationService.validate_file_scope(b["file_reference"], setup_name)
+
+@frappe.whitelist()
+def list_layout_templates():
+	"""
+	Returns saved layout templates for the active setup target DocType.
+	"""
+	api_guard()
+	setup = SetupService.get_active_setup()
+	return TemplateService.list_templates(setup.target_doctype)
+
+@frappe.whitelist()
+def save_layout_template(template_title, blocks_json):
+	"""
+	Saves the current builder canvas as a reusable template.
+	"""
+	api_guard()
+	RateLimitService.check_limit(RATE_LIMIT_SAVE_LAYOUT)
+
+	setup = SetupService.get_active_setup()
+	blocks = TemplateService.parse_blocks(blocks_json)
+	blocks = TemplateService.normalize_blocks(blocks, setup.target_doctype)
+	validate_layout_block_scope(blocks, setup.name)
+
+	template = TemplateService.save_template(template_title, setup.target_doctype, blocks)
+	AuditLogService.log_event(
+		"SAVE_TEMPLATE",
+		"Saved template {0} with {1} blocks.".format(template["name"], template["block_count"])
+	)
+
+	return {"status": "success", "template": template}
+
+@frappe.whitelist()
+def load_layout_template(template_name):
+	"""
+	Loads a saved template into the active setup, replacing current blocks.
+	"""
+	api_guard()
+	RateLimitService.check_limit(RATE_LIMIT_SAVE_LAYOUT)
+
+	setup = SetupService.get_active_setup()
+	SetupService.validate_editing_state(setup)
+
+	template, blocks = TemplateService.get_template(template_name, setup.target_doctype)
+	validate_layout_block_scope(blocks, setup.name)
+	LayoutService.save_layout_blocks(setup.name, blocks, setup.target_doctype)
+
+	AuditLogService.log_event("LOAD_TEMPLATE", "Loaded template {0} into setup {1}.".format(template.name, setup.name))
+
+	return {"status": "success", "blocks": LayoutService.get_layout(setup.name)}
+
+@frappe.whitelist()
+def delete_layout_template(template_name):
+	"""
+	Deletes a saved layout template for the active target DocType.
+	"""
+	api_guard()
+	RateLimitService.check_limit(RATE_LIMIT_SAVE_LAYOUT)
+
+	setup = SetupService.get_active_setup()
+	deleted_name = TemplateService.delete_template(template_name, setup.target_doctype)
+	AuditLogService.log_event("DELETE_TEMPLATE", "Deleted template {0}.".format(deleted_name))
+
 	return {"status": "success"}
 
 @frappe.whitelist()

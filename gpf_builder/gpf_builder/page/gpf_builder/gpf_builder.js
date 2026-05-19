@@ -109,6 +109,8 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 			this.$wrapper.find("#btn-upload-pdf").off("click.gpf").on("click.gpf", () => this.upload_pdf());
 			this.$wrapper.find("#btn-pdf-text").off("click.gpf").on("click.gpf", () => this.show_pdf_text());
 			this.$wrapper.find("#btn-save").off("click.gpf").on("click.gpf", () => this.save_layout());
+			this.$wrapper.find("#btn-save-template").off("click.gpf").on("click.gpf", () => this.save_template());
+			this.$wrapper.find("#btn-load-template").off("click.gpf").on("click.gpf", () => this.show_template_loader());
 			this.$wrapper.find("#btn-preview").off("click.gpf").on("click.gpf", () => this.show_preview());
 			this.$wrapper.find("#btn-output").off("click.gpf").on("click.gpf", () => this.show_output());
 			this.$wrapper.find("#btn-finalize").off("click.gpf").on("click.gpf", () => this.finalize());
@@ -377,7 +379,7 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 
 		apply_state_locking() {
 			const finalized = this.setup && this.setup.status === "Finalized";
-			$("#btn-save, [data-add-block], #btn-delete, #btn-duplicate, #btn-reset, #btn-finalize, #btn-ocr, #btn-upload-pdf").toggle(!finalized);
+			$("#btn-save, #btn-load-template, [data-add-block], #btn-delete, #btn-duplicate, #btn-reset, #btn-finalize, #btn-ocr, #btn-upload-pdf").toggle(!finalized);
 			$("#btn-edit").toggle(finalized);
 			this.layer.find(".gpf-block").forEach((node) => node.draggable(!finalized));
 			if (finalized) {
@@ -513,6 +515,12 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 
 		async load_blocks() {
 			const blocks = await this.call("gpf_builder.api.api.get_layout");
+			this.render_blocks(blocks);
+		}
+
+		render_blocks(blocks) {
+			this.select_node(null);
+			this.layer.find(".gpf-block").forEach((node) => node.destroy());
 			this.is_loading_blocks = true;
 			(blocks || []).forEach((block) => this.add_block(block.block_type, block));
 			this.is_loading_blocks = false;
@@ -820,11 +828,17 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 				"text-align:inherit",
 				"text-align-last:inherit"
 			].join(";");
+			const table_style = [
+				"table{width:100% !important;border-collapse:collapse !important;border-spacing:0 !important;margin:0 !important;font-size:inherit !important;line-height:inherit !important;color:inherit !important}",
+				"th,td{border:1px solid #000 !important;padding:2px 6px !important;vertical-align:top !important;line-height:inherit !important;color:inherit !important}",
+				"th{background:#d9d9d9 !important;background-color:#d9d9d9 !important;font-weight:bold !important;text-align:center !important}",
+				"td{text-align:left !important}"
+			].join("");
 			const svg = `
 				<svg xmlns="http://www.w3.org/2000/svg" width="${options.width}" height="${options.height}">
 					<foreignObject width="100%" height="100%">
 						<div xmlns="http://www.w3.org/1999/xhtml" style="${body_style}">
-							<style>span.gpf-builder-plain-text{${span_style}}</style>
+							<style>span.gpf-builder-plain-text{${span_style}}${table_style}</style>
 							${options.html}
 						</div>
 					</foreignObject>
@@ -875,6 +889,28 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 					<div class="property-label">HTML</div>
 					<textarea class="form-control input-sm property-input" data-prop="static_text" rows="6">${this.escape_html(attrs.static_text || "")}</textarea>
 				</div>
+				${attrs.block_type === "Static Text" ? `
+					<div class="property-group gpf-table-drawer">
+						<div class="property-label">Table Drawer</div>
+						<div class="row">
+							<div class="col-xs-6">
+								<div class="property-label">Body Rows</div>
+								<input type="number" min="1" max="20" step="1" class="form-control input-sm" data-table-rows value="2">
+							</div>
+							<div class="col-xs-6">
+								<div class="property-label">Columns</div>
+								<input type="number" min="1" max="8" step="1" class="form-control input-sm" data-table-cols value="3">
+							</div>
+						</div>
+						<label class="gpf-table-option">
+							<input type="checkbox" data-table-header checked> Include header row
+						</label>
+						<button class="btn btn-xs btn-default" type="button" data-action="insert-table">
+							<i class="fa fa-table"></i> Insert Table
+						</button>
+						<div class="text-muted gpf-table-help">Inserts an editable HTML table into this Static Text block.</div>
+					</div>
+				` : ""}
 				<div class="property-group">
 					<div class="property-label">Text Alignment</div>
 					<select class="form-control input-sm property-input" data-prop="style_text_align">
@@ -953,6 +989,70 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 			container.find(".property-input").on("change keyup", (event) => {
 				this.update_selected_property($(event.currentTarget).data("prop"), $(event.currentTarget).val());
 			});
+			container.find('[data-action="insert-table"]').on("click", () => this.insert_table_into_static_text());
+		}
+
+		insert_table_into_static_text() {
+			if (!this.selected_node || this.selected_node.getAttr("block_type") !== "Static Text") {
+				frappe.show_alert({ message: "Select a Static Text block first.", indicator: "orange" });
+				return;
+			}
+
+			const container = $("#gpf-properties-content");
+			const rows = this.clamp_integer(container.find("[data-table-rows]").val(), 1, 20, 2);
+			const cols = this.clamp_integer(container.find("[data-table-cols]").val(), 1, 8, 3);
+			const include_header = container.find("[data-table-header]").is(":checked");
+			const textarea = container.find('[data-prop="static_text"]').get(0);
+			const current = textarea ? textarea.value : (this.selected_node.getAttr("static_text") || "");
+			const table_html = this.build_table_html(rows, cols, include_header);
+			const next = this.insert_text_at_cursor(current, table_html, textarea);
+
+			this.selected_node.setAttr("static_text", next);
+			if (textarea) {
+				textarea.value = next;
+			}
+			this.update_block_visual(this.selected_node);
+			this.schedule_auto_save();
+			frappe.show_alert({ message: "Table inserted.", indicator: "green" });
+		}
+
+		build_table_html(rows, cols, include_header) {
+			const html = ["<table>"];
+			if (include_header) {
+				html.push("\t<thead>");
+				html.push("\t\t<tr>");
+				for (let col = 1; col <= cols; col++) {
+					html.push(`\t\t\t<th>Header ${col}</th>`);
+				}
+				html.push("\t\t</tr>");
+				html.push("\t</thead>");
+			}
+			html.push("\t<tbody>");
+			for (let row = 1; row <= rows; row++) {
+				html.push("\t\t<tr>");
+				for (let col = 1; col <= cols; col++) {
+					html.push(`\t\t\t<td>&nbsp;</td>`);
+				}
+				html.push("\t\t</tr>");
+			}
+			html.push("\t</tbody>");
+			html.push("</table>");
+			return `\n${html.join("\n")}\n`;
+		}
+
+		insert_text_at_cursor(current, insert_text, textarea) {
+			if (!textarea || typeof textarea.selectionStart !== "number") {
+				return `${current || ""}${insert_text}`;
+			}
+			const start = textarea.selectionStart;
+			const end = textarea.selectionEnd;
+			return `${current.slice(0, start)}${insert_text}${current.slice(end)}`;
+		}
+
+		clamp_integer(value, min, max, fallback) {
+			const parsed = parseInt(value, 10);
+			if (Number.isNaN(parsed)) return fallback;
+			return Math.max(min, Math.min(max, parsed));
 		}
 
 		update_selected_property(prop, value) {
@@ -1078,13 +1178,122 @@ frappe.pages["gpf-builder"].on_page_load = function(wrapper) {
 			};
 		}
 
-		async save_layout(options) {
+		get_serialized_blocks() {
 			this.clear_overlap_highlights();
-			const blocks = this.layer.find(".gpf-block").map((node, index) => this.serialize_block(node, index));
+			return this.layer.find(".gpf-block").map((node, index) => this.serialize_block(node, index));
+		}
+
+		async save_layout(options) {
+			const blocks = this.get_serialized_blocks();
 			await this.call("gpf_builder.api.api.save_layout", { blocks_json: JSON.stringify(blocks) });
 			if (!(options && options.silent)) {
 				frappe.show_alert({ message: "Layout saved.", indicator: "green" });
 			}
+		}
+
+		save_template() {
+			const blocks = this.get_serialized_blocks();
+			if (!blocks.length) {
+				frappe.show_alert({ message: "Add at least one block before saving a template.", indicator: "orange" });
+				return;
+			}
+
+			const dialog = new frappe.ui.Dialog({
+				title: "Save Layout Template",
+				fields: [
+					{
+						fieldtype: "Data",
+						fieldname: "template_title",
+						label: "Template Title",
+						reqd: 1
+					}
+				],
+				primary_action_label: "Save Template",
+				primary_action: async (values) => {
+					const result = await this.call("gpf_builder.api.api.save_layout_template", {
+						template_title: values.template_title,
+						blocks_json: JSON.stringify(blocks)
+					});
+					dialog.hide();
+					const template = result && result.template;
+					frappe.show_alert({
+						message: template ? `Template saved: ${template.template_title}` : "Template saved.",
+						indicator: "green"
+					});
+				}
+			});
+			dialog.show();
+		}
+
+		async show_template_loader() {
+			const templates = await this.call("gpf_builder.api.api.list_layout_templates") || [];
+			const dialog = new frappe.ui.Dialog({
+				title: "Load Layout Template",
+				size: "large",
+				fields: [
+					{
+						fieldtype: "HTML",
+						fieldname: "template_list"
+					}
+				]
+			});
+			dialog.show();
+			this.render_template_loader(dialog, templates);
+		}
+
+		render_template_loader(dialog, templates) {
+			const wrapper = dialog.fields_dict.template_list.$wrapper;
+			wrapper.empty();
+			if (!templates.length) {
+				wrapper.html('<div class="text-muted gpf-empty-template-list">No templates saved for this target DocType.</div>');
+				return;
+			}
+
+			const list = $('<div class="gpf-template-list"></div>');
+			templates.forEach((template) => {
+				const item = $(`
+					<div class="gpf-template-item">
+						<div class="gpf-template-meta">
+							<div class="gpf-template-title"></div>
+							<div class="gpf-template-subtitle"></div>
+						</div>
+						<div class="gpf-template-actions">
+							<button class="btn btn-xs btn-primary" type="button" data-action="load-template">
+								<i class="fa fa-folder-open"></i> Load
+							</button>
+							<button class="btn btn-xs btn-danger" type="button" data-action="delete-template">
+								<i class="fa fa-trash"></i> Delete
+							</button>
+						</div>
+					</div>
+				`);
+				item.find(".gpf-template-title").text(template.template_title || template.name);
+				item.find(".gpf-template-subtitle").text(`${template.target_doctype || ""} | ${template.modified || ""}`);
+				item.find('[data-action="load-template"]').on("click", () => this.load_template(template.name, dialog));
+				item.find('[data-action="delete-template"]').on("click", () => this.delete_template(template.name, dialog));
+				list.append(item);
+			});
+			wrapper.append(list);
+		}
+
+		load_template(template_name, dialog) {
+			frappe.confirm("Load this template? Current layout blocks will be replaced.", async () => {
+				const result = await this.call("gpf_builder.api.api.load_layout_template", { template_name });
+				this.render_blocks((result && result.blocks) || []);
+				this.render_properties();
+				this.apply_state_locking();
+				dialog.hide();
+				frappe.show_alert({ message: "Template loaded.", indicator: "green" });
+			});
+		}
+
+		delete_template(template_name, dialog) {
+			frappe.confirm("Delete this template?", async () => {
+				await this.call("gpf_builder.api.api.delete_layout_template", { template_name });
+				const templates = await this.call("gpf_builder.api.api.list_layout_templates") || [];
+				this.render_template_loader(dialog, templates);
+				frappe.show_alert({ message: "Template deleted.", indicator: "green" });
+			});
 		}
 
 		schedule_auto_save() {
